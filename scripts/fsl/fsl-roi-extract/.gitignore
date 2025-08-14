@@ -1,0 +1,9 @@
+*.nii
+*.nii.gz
+*.bval
+*.bvec
+*.zip
+*.tar
+*.tar.gz
+*.7z
+logs/
