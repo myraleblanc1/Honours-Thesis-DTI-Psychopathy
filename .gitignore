@@ -7,3 +7,5 @@
 *.tar.gz
 *.7z
 **/logs/
+tmp/ logs/ data/raw/ data/derivatives/ data/ processed/ data/external EOF
+
