@@ -32,7 +32,7 @@ tail -n +2 "$CSV" | while IFS=, read -r subj _; do
         outdir="$DEST/$subj"
         mkdir -p "$outdir"
 
-        for file in "$dti"/motion.eps; do
+        for file in "$dti"/fmotion.eps; do
             if [[ -f "$file" ]]; then
                 cp -P "$file" "$outdir"/
             else
