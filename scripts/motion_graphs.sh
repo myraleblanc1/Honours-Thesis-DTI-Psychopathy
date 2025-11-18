@@ -13,7 +13,7 @@ CSV="/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/scripts/fsl/i
 MOTION_BASE="/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/raw"
 
 # Where you want processed outputs:
-# /.../data/processed/<subj>/motion_qc.png
+# /.../data/processed/<subj>/motion_plot.png
 PROCESSED_BASE="/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/processed"
 
 # Pattern inside each subject folder where motion files live
