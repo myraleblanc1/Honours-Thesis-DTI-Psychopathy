@@ -20,7 +20,7 @@ PROCESSED_BASE="/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/da
 # Adjust if needed, for example:
 #   MOTION_GLOB="motion/*.txt"
 #   MOTION_GLOB="motion/mc*.par"
-MOTION_GLOB="motion/fmotion.txt"
+MOTION_GLOB="motion/fvolume.txt"
 
 # Labels for the six motion parameters
 MOTION_LABELS="x,y,z,pitch,yaw,roll"
