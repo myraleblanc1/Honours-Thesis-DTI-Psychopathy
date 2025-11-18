@@ -66,17 +66,22 @@ tail -n +2 "$CSV" | while IFS=, read -r subj _; do
         awk '{print $2, $3, $4, $5, $6, $7}' "$mf" > "$tmpfile"
 
         # Output image
+              # Output image
         out_png="$outdir/motion_qc.png"
 
-        echo "   -> Writing plot to: $out_png"
+        echo "   -> Removing any old plot at: $out_png"
+        rm -f "$out_png"
+
+        echo "   -> Writing NEW plot to: $out_png"
 
         fsl_tsplot \
             -i "$tmpfile" \
             -a "$MOTION_LABELS" \
-            -t "$subj motion parameters" \
+            -t "$subj motion parameters (fixed)" \
             -u 1 \
             -w 1200 -h 800 \
             -o "$out_png"
+
 
         # Clean up temp file
         rm -f "$tmpfile"
