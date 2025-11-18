@@ -2,57 +2,84 @@
 #!/bin/bash
 set -euo pipefail
 
-#-------------------------------
+#--------------------------------
 # CONFIGURATION
-#-------------------------------
+#--------------------------------
+
+# CSV with subject IDs in the first column (header in first row)
 CSV="/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/scripts/fsl/id_map.csv"
-BASE="/run/user/1002/gvfs/smb-share:server=cortex,share=mrn-data-archive/tescoke_20696/AUTO_ANALYSIS/triotim"
-OUTDIR="/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/qc/motion_plots"
 
-# Adjust this pattern to point to your motion parameter files
-# Example guesses (you'll tweak this):
-#   mc/prefiltered_func_data_mcf.par
-#   or something like */motion.par
-MOTION_GLOB="Study*/analysis/dti_*/dirall/*/mc/prefiltered_func_data_mcf.par"
+# Where your raw data lives, expected structure:
+# /.../data/raw/<subj>/motion/<motion_file>.par
+MOTION_BASE="/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/raw"
 
-mkdir -p "$OUTDIR"
+# Where you want processed outputs:
+# /.../data/processed/<subj>/motion_qc.png
+PROCESSED_BASE="/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/processed"
 
-#-------------------------------
+# Pattern inside each subject folder where motion files live
+# Adjust if needed, for example:
+#   MOTION_GLOB="motion/*.txt"
+#   MOTION_GLOB="motion/mc*.par"
+MOTION_GLOB="motion/fvolume.txt"
+
+# Labels for the six motion parameters
+MOTION_LABELS="x,y,z,pitch,yaw,roll"
+
+#--------------------------------
 # MAIN LOOP
-#-------------------------------
+#--------------------------------
+
 tail -n +2 "$CSV" | while IFS=, read -r subj _; do
-    echo ">>> Processing $subj"
-
-    # Find motion files for this subject
-    motion_files=( "$BASE/$subj"/$MOTION_GLOB )
-
-    # If nothing matched, skip
-    if [[ ! -f "${motion_files[0]:-}" ]]; then
-        echo "    !! No motion file found for $subj"
-        echo "---------------------------------------"
+    subj=$(echo "$subj" | xargs)   # trim spaces just in case
+    if [[ -z "$subj" ]]; then
         continue
     fi
 
+    echo ">>> Processing subject: $subj"
+
+    # Find motion files for this subject
+    motion_files=( "$MOTION_BASE/$subj"/$MOTION_GLOB )
+
+    # Check if anything matched
+    if [[ ! -f "${motion_files[0]:-}" ]]; then
+        echo "   !! No motion file found for $subj in:"
+        echo "      $MOTION_BASE/$subj/$MOTION_GLOB"
+        echo "-----------------------------------------"
+        continue
+    fi
+
+    # Subject specific processed directory
+    outdir="$PROCESSED_BASE/$subj"
+    mkdir -p "$outdir"
+
+    # Loop over motion files (usually just one)
     for mf in "${motion_files[@]}"; do
-        echo "    Found motion file: $mf"
+        if [[ ! -f "$mf" ]]; then
+            continue
+        fi
 
-        # Build output name
-        fname=$(basename "$mf")
-        stem="${fname%.*}"  # strip extension
-        png="$OUTDIR/${subj}_${stem}_motion_qc.png"
+        echo "   Found motion file: $mf"
 
-        echo "    -> Plotting to: $png"
+        # Output image
+        out_png="$outdir/motion_qc.png"
+
+        echo "   -> Writing plot to: $out_png"
 
         fsl_tsplot \
-          -i "$mf" \
-          -a x,y,z,pitch,yaw,roll \
-          -t "${subj} ${stem} motion" \
-          -u 1 \
-          -w 1200 -h 800 \
-          -o "$png"
+            -i "$mf" \
+            -a "$MOTION_LABELS" \
+            -t "$subj motion parameters" \
+            -u 1 \
+            -w 1200 -h 800 \
+            -o "$out_png"
     done
 
+    echo "   Finished subject: $subj"
+    echo "-----------------------------------------"
+done
+
     echo " Finished $subj"
-    echo "---------------------------------------"
+    echo "-------------------------------------"
 done
 
