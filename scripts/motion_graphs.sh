@@ -73,6 +73,7 @@ tail -n +2 "$CSV" | while IFS=, read -r subj _; do
             -u 1 \
             -w 1200 -h 800 \
             --start 2 \
+            --finish 7 \
             -o "$out_png"
     done
 
