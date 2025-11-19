@@ -13,7 +13,7 @@ CSV="/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/scripts/fsl/i
 MOTION_BASE="/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/raw"
 
 # Where you want processed outputs:
-# /.../data/processed/<subj>/motion_*.png
+# /.../data/processed/<subj>/motion_plot.png
 PROCESSED_BASE="/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/processed"
 
 # Pattern inside each subject folder where motion files live
@@ -21,6 +21,9 @@ PROCESSED_BASE="/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/da
 #   MOTION_GLOB="motion/*.txt"
 #   MOTION_GLOB="motion/mc*.par"
 MOTION_GLOB="motion/fvolume.txt"
+
+# Labels for the six motion parameters
+MOTION_LABELS="x,y,z,pitch,yaw,roll"
 
 #--------------------------------
 # MAIN LOOP
@@ -59,35 +62,26 @@ tail -n +2 "$CSV" | while IFS=, read -r subj _; do
 
         # Make a temp file with FIRST COLUMN REMOVED
         # Assuming your file looks like:  vol x y z pitch yaw roll  (7 columns)
-        # tmpfile columns become:
-        #   1:x  2:y  3:z  4:pitch  5:yaw  6:roll
         tmpfile=$(mktemp)
         awk '{print $2, $3, $4, $5, $6, $7}' "$mf" > "$tmpfile"
 
-        # Output images
-        out_trans="$outdir/motion_qc_trans.png"
-        out_rot="$outdir/motion_qc_rot.png"
+        # Output image
+              # Output image
+        out_png="$outdir/motion_qc.png"
 
-        echo "   -> Removing any old plots"
-        rm -f "$out_trans" "$out_rot"
+        echo "   -> Removing any old plot at: $out_png"
+        rm -f "$out_png"
 
-        echo "   -> Writing translation plot (x,y,z) to: $out_trans"
+        echo "   -> Writing NEW plot to: $out_png"
+
         fsl_tsplot \
             -i "$tmpfile" \
-            --start 1 \
-            --finish 3 \
-            -a x,y,z \
-            -t "${subj} translation (x,y,z)" \
-            -o "$out_trans"
+            -a "$MOTION_LABELS" \
+            -t "$subj motion parameters (fixed)" \
+            -u 1 \
+            -w 1200 -h 800 \
+            -o "$out_png"
 
-        echo "   -> Writing rotation plot (pitch,yaw,roll) to: $out_rot"
-        fsl_tsplot \
-            -i "$tmpfile" \
-            --start 4 \
-            --finish 6 \
-            -a pitch,yaw,roll \
-            -t "${subj} rotation (pitch,yaw,roll)" \
-            -o "$out_rot"
 
         # Clean up temp file
         rm -f "$tmpfile"
