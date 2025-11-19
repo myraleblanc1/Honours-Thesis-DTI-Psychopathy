@@ -22,9 +22,6 @@ PROCESSED_BASE="/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/da
 #   MOTION_GLOB="motion/mc*.par"
 MOTION_GLOB="motion/fvolume.txt"
 
-# Labels for the six motion parameters
-MOTION_LABELS="x,y,z,pitch,yaw,roll"
-
 #--------------------------------
 # MAIN LOOP
 #--------------------------------
@@ -64,24 +61,35 @@ tail -n +2 "$CSV" | while IFS=, read -r subj _; do
         # Assuming your file looks like:  vol x y z pitch yaw roll  (7 columns)
         tmpfile=$(mktemp)
         awk '{print $2, $3, $4, $5, $6, $7}' "$mf" > "$tmpfile"
+        # tmpfile columns are now:
+        # 1:x  2:y  3:z  4:pitch  5:yaw  6:roll
 
-        # Output image
-              # Output image
-        out_png="$outdir/motion_qc.png"
+        # Output images
+        out_trans="$outdir/motion_trans.png"
+        out_rot="$outdir/motion_rot.png"
 
-        echo "   -> Removing any old plot at: $out_png"
-        rm -f "$out_png"
+        echo "   -> Removing any old plots:"
+        rm -f "$out_trans" "$out_rot"
 
-        echo "   -> Writing NEW plot to: $out_png"
-
+        echo "   -> Writing translation plot (x,y,z) to: $out_trans"
         fsl_tsplot \
             -i "$tmpfile" \
-            -a "$MOTION_LABELS" \
-            -t "$subj motion parameters (fixed)" \
+            -c 1,2,3 \
+            -a x,y,z \
+            -t "$subj translation (x,y,z)" \
             -u 1 \
-            -w 1200 -h 800 \
-            -o "$out_png"
+            -w 1200 -h 400 \
+            -o "$out_trans"
 
+        echo "   -> Writing rotation plot (pitch,yaw,roll) to: $out_rot"
+        fsl_tsplot \
+            -i "$tmpfile" \
+            -c 4,5,6 \
+            -a pitch,yaw,roll \
+            -t "$subj rotation (pitch,yaw,roll)" \
+            -u 1 \
+            -w 1200 -h 400 \
+            -o "$out_rot"
 
         # Clean up temp file
         rm -f "$tmpfile"
@@ -89,4 +97,6 @@ tail -n +2 "$CSV" | while IFS=, read -r subj _; do
 
     echo "   Finished subject: $subj"
     echo "-----------------------------------------"
+done
+
 done
