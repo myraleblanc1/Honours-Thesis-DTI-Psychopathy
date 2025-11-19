@@ -72,7 +72,7 @@ tail -n +2 "$CSV" | while IFS=, read -r subj _; do
             -t "$subj motion parameters" \
             -u 1 \
             -w 1200 -h 800 \
-            --start 2
+            --start 2 \
             -o "$out_png"
     done
 
