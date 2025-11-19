@@ -77,7 +77,7 @@ tail -n +2 "$CSV" | while IFS=, read -r subj _; do
         echo "   -> Writing translation plot (x,y,z) to: $out_trans"
         fsl_tsplot \
             -i "$tmpfile" \
-            -start 1 \
+            --start 1 \
             -finish 3 \
             -a "$MOTION_LABELS_TRANS" \
             -t "$subj translation (x,y,z)" \
@@ -88,8 +88,8 @@ tail -n +2 "$CSV" | while IFS=, read -r subj _; do
         echo "   -> Writing rotation plot (pitch,yaw,roll) to: $out_rot"
         fsl_tsplot \
             -i "$tmpfile" \
-            -start 4 \
-            -finish 6 \
+            --start 4 \
+            --finish 6 \
             -a "$MOTION_LABELS_ROT" \
             -t "$subj rotation (pitch,yaw,roll)" \
             -u 1 \
