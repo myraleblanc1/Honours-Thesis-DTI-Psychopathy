@@ -62,7 +62,7 @@ tail -n +2 "$CSV" | while IFS=, read -r subj _; do
         echo "   Found motion file: $mf"
 
         # Output image
-        out_png="$outdir/motion_qc.png"
+        out_png="$outdir/motion_qc_rot.png"
 
         echo "   -> Writing plot to: $out_png"
 
@@ -72,8 +72,8 @@ tail -n +2 "$CSV" | while IFS=, read -r subj _; do
             -t "$subj motion parameters" \
             -u 1 \
             -w 1200 -h 800 \
-            --start=2 \
-            --finish=5 \
+            --start=5 \
+            --finish=7 \
             -o "$out_png"
     done
 
