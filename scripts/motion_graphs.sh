@@ -20,11 +20,10 @@ PROCESSED_BASE="/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/da
 # Pattern inside each subject folder where motion files live
 # Adjust if needed, for example:
 #   MOTION_GLOB="motion/*.txt"
-#   MOTION_GLOB="motion/mc*.par"
 MOTION_GLOB="motion/fvolume.txt"
 
 # Labels for the six motion parameters
-MOTION_LABELS="x,y,z,pitch,yaw,roll"
+MOTION_LABELS="x,y,z"
 
 #--------------------------------
 # MAIN LOOP
