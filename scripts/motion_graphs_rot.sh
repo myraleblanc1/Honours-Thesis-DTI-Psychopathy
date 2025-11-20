@@ -24,7 +24,7 @@ PROCESSED_BASE="/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/da
 MOTION_GLOB="motion/fvolume.txt"
 
 # Labels for the six motion parameters
-MOTION_LABELS="x,y,z,pitch,yaw,roll"
+MOTION_LABELS="pitch,yaw,roll"
 
 #--------------------------------
 # MAIN LOOP
