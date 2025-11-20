@@ -62,7 +62,7 @@ tail -n +2 "$CSV" | while IFS=, read -r subj _; do
         echo "   Found motion file: $mf"
 
         # Output image
-        out_png="$outdir/motion_qc.png"
+        out_png="$outdir/motion_qc_trans.png"
 
         echo "   -> Writing plot to: $out_png"
 
