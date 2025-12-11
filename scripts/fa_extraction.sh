@@ -1,14 +1,14 @@
 #fa extraction script 
 
-SUBJECT_DIR="/data/raw"
-ROI_DIR="/data/rois"
+SUBJECT_DIR='/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/raw' 
+ROI_DIR='/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/rois' 
 
 UF_L="$ROI_DIR/UF_L.nii.gz"
 UF_R="$ROI_DIR/UF_R.nii.gz"
 DC_L="$ROI_DIR/DC_L.nii.gz"
 DC_R="$ROI_DIR/DC_R.nii.gz"
 
-OUTPUT="roi_FA_values.csv"
+OUTPUT='/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/processed/roi_FA_values.csv'
 echo "Subject,UF_L_FA,UF_R_FA,DC_L_FA,DC_R_FA" > $OUTPUT
 
 for subj in $SUBJECT_DIR/*; do
