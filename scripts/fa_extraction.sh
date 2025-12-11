@@ -1,12 +1,13 @@
 #fa extraction script 
 
-SUBJECT_DIR='/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/raw' 
-ROI_DIR='/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/rois' 
+SUBJECT_DIR='/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/raw'
+ROI_DIR='/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/rois'
 
-UF_L="$ROI_DIR/UF_L.nii.gz"
-UF_R="$ROI_DIR/UF_R.nii.gz"
-DC_L="$ROI_DIR/DC_L.nii.gz"
-DC_R="$ROI_DIR/DC_R.nii.gz"
+# Use the RESAMPLED ROI masks
+UF_L="$ROI_DIR/UF_L_resampled.nii.gz"
+UF_R="$ROI_DIR/UF_R_resampled.nii.gz"
+DC_L="$ROI_DIR/DC_L_resampled.nii.gz"
+DC_R="$ROI_DIR/DC_R_resampled.nii.gz"
 
 OUTPUT='/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/processed/roi_FA_values.csv'
 echo "Subject,UF_L_FA,UF_R_FA,DC_L_FA,DC_R_FA" > $OUTPUT
