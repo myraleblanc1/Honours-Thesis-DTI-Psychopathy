@@ -1,4 +1,4 @@
-ROI_DIR="/data/rois"
+ROI_DIR='/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/rois'
 mkdir -p $ROI_DIR
 
 ATLAS="$FSLDIR/data/atlases/JHU/JHU-ICBM-tracts-maxprob-thr0-1mm.nii.gz"
