@@ -1,1 +1,36 @@
 #fa extraction script 
+
+SUBJECT_DIR="/data/raw"
+ROI_DIR="/data/rois"
+
+UF_L="$ROI_DIR/UF_L.nii.gz"
+UF_R="$ROI_DIR/UF_R.nii.gz"
+DC_L="$ROI_DIR/DC_L.nii.gz"
+DC_R="$ROI_DIR/DC_R.nii.gz"
+
+OUTPUT="roi_FA_values.csv"
+echo "Subject,UF_L_FA,UF_R_FA,DC_L_FA,DC_R_FA" > $OUTPUT
+
+for subj in $SUBJECT_DIR/*; do
+    if [[ -d "$subj" ]]; then
+
+        ID=$(basename "$subj")
+        FA_IMAGE="$subj/rdti_FA_FA_to_target.nii.gz"
+
+        if [[ ! -f "$FA_IMAGE" ]]; then
+            echo "Skipping $ID (no FA image)"
+            continue
+        fi
+
+        echo "Extracting FA for $ID..."
+
+        UF_L_FA=$(fslmeants -i $FA_IMAGE -m $UF_L)
+        UF_R_FA=$(fslmeants -i $FA_IMAGE -m $UF_R)
+        DC_L_FA=$(fslmeants -i $FA_IMAGE -m $DC_L)
+        DC_R_FA=$(fslmeants -i $FA_IMAGE -m $DC_R)
+
+        echo "$ID,$UF_L_FA,$UF_R_FA,$DC_L_FA,$DC_R_FA" >> $OUTPUT
+    fi
+done
+
+echo "Saved FA ROI table to $OUTPUT"
