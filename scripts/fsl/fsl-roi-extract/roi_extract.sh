@@ -1,160 +1,137 @@
 #!/usr/bin/env bash
-#!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
+# NOTE: deliberately NOT using -e (do not exit on single-subject failure)
 
-# ------------------------------------------------------
-# USER PATHS — modify if needed
-# ------------------------------------------------------
+# ------------------
+# PATHS
+# ------------------
 BASEDIR="/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy"
-RAW="${BASEDIR}/data/raw"
-OUTDIR="${BASEDIR}/data/processed/roi_batch"
-ATLAS="$FSLDIR/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz"
-FA_TMPL="$FSLDIR/data/standard/FMRIB58_FA_1mm.nii.gz"   # reference for native→MNI alignment
+RAW="$BASEDIR/data/raw"
+OUTDIR="$BASEDIR/data/processed/roi_batch_FA"
 
-mkdir -p "$OUTDIR"/group_csv "$OUTDIR"/qc "$OUTDIR"/roi_masks
-LOG="$OUTDIR/batch_extract_$(date +%Y%m%d_%H%M%S).log"
+FA_TMPL="$FSLDIR/data/standard/FMRIB58_FA_1mm.nii.gz"
+
+mkdir -p "$OUTDIR"/group_csv "$OUTDIR"/qc
+
+LOG="$OUTDIR/batch_FA_extract_$(date +%Y%m%d_%H%M%S).log"
 exec > >(tee -i "$LOG") 2>&1
 
-echo "[INFO] Starting batch ROI extraction"
-echo "[INFO] Raw folder: $RAW"
-echo "[INFO] Output folder: $OUTDIR"
+echo "[INFO] FA-only ROI extraction started: $(date)"
 
-# ------------------------------------------------------
-# FIXED LABEL INDICES (from your prereg + old script)
-# ------------------------------------------------------
-UF_L_IDX=48
-UF_R_IDX=47
-CgC_L_IDX=36
-CgC_R_IDX=35
+# ------------------
+# ROI DEFINITIONS
+# ------------------
+declare -A ROIS
+ROIS["JHU_UF_L"]=21
+ROIS["JHU_UF_R"]=22
+ROIS["JHU_CgC_L"]=31
+ROIS["JHU_CgC_R"]=32
 
-echo "[INFO] Using JHU Labels atlas indices:"
-echo "[INFO] UF_L=$UF_L_IDX UF_R=$UF_R_IDX CgC_L=$CgC_L_IDX CgC_R=$CgC_R_IDX"
+CSV="$OUTDIR/group_csv/roi_FA_ALL_SUBJECTS.csv"
+echo "subject,roi,FA_mean,FA_sd,nvox" > "$CSV"
 
-# ------------------------------------------------------
-# OUTPUT CSV (group-level)
-# ------------------------------------------------------
-CSV="$OUTDIR/group_csv/roi_metrics_ALL_SUBJECTS.csv"
-echo "subject,space,roi,metric,mean,sd,voxels,mm3" > "$CSV"
+# ------------------
+# FUNCTION: extract FA safely
+# ------------------
+extract_fa () {
+    local IMG="$1"
+    local MASK="$2"
+    local ID="$3"
+    local ROI="$4"
 
-# ------------------------------------------------------
-# Batch loop
-# ------------------------------------------------------
-for SUBJ in "$RAW"/* ; do
+    if [ ! -s "$IMG" ]; then
+        echo "[WARN] Empty FA image for $ID ($ROI), skipping"
+        return
+    fi
+
+    if [ ! -s "$MASK" ]; then
+        echo "[WARN] Missing ROI mask for $ID ($ROI), skipping"
+        return
+    fi
+
+    stats=$(fslstats "$IMG" -k "$MASK" -M -S -V 2>/dev/null || true)
+
+    if [ -z "$stats" ]; then
+        echo "[WARN] fslstats failed for $ID ($ROI)"
+        return
+    fi
+
+    mean=$(echo "$stats" | awk '{print $1}')
+    sd=$(echo "$stats" | awk '{print $2}')
+    nvox=$(echo "$stats" | awk '{print $3}')
+
+    echo "$ID,$ROI,$mean,$sd,$nvox" >> "$CSV"
+}
+
+# ------------------
+# MAIN LOOP
+# ------------------
+for SUBJ in "$RAW"/*; do
     [ -d "$SUBJ" ] || continue
     ID=$(basename "$SUBJ")
-    echo "-------------------------"
+
     echo "[SUBJECT] $ID"
-    mkdir -p "$OUTDIR/$ID"
 
-    # detect FA files
-    FA_STD=$(ls "$SUBJ"/tbdti_FA*.nii* 2>/dev/null || true)
-    FA_NATIVE=$(ls "$SUBJ"/rdti_FA*.nii* 2>/dev/null || true)
+    # ------------------
+    # FIND FA FILE
+    # ------------------
+    FA_IMG=""
 
-    MODE=""
-    REF=""
-    FA=""
-    MD=""
-    RD=""
-    AD=""
+    for f in "$SUBJ"/tbdti_FA*.nii* "$SUBJ"/rdti_FA*.nii*; do
+        if [ -s "$f" ]; then
+            FA_IMG="$f"
+            break
+        fi
+    done
 
-    # ---------------------------------------
-    # STANDARD-SPACE INPUT (tbdti files)
-    # ---------------------------------------
-    if [ -n "$FA_STD" ]; then
-        MODE="STANDARD"
-
-        FA="$FA_STD"
-        MD=$(ls "$SUBJ"/tbdti_MD*.nii* 2>/dev/null)
-        RD=$(ls "$SUBJ"/tbdti_RD*.nii* 2>/dev/null)
-        AD=$(ls "$SUBJ"/tbdti_L1*.nii* 2>/dev/null)
-        REF="$FA"
-
-        echo "[INFO] Using STANDARD-space files"
-
-    # ---------------------------------------
-    # NATIVE-SPACE INPUT (rdti files)
-    # ---------------------------------------
-    elif [ -n "$FA_NATIVE" ]; then
-        MODE="NATIVE"
-
-        echo "[INFO] Found native-space maps; registering to MNI…"
-        mkdir -p "$OUTDIR/$ID/mni"
-
-        flirt -in "$FA_NATIVE" -ref "$FA_TMPL" -omat "$OUTDIR/$ID/subj2MNI.mat" -dof 12 -cost corratio
-
-        for metric in FA MD RD L1; do
-            in=$(ls "$SUBJ"/rdti_${metric}*.nii* 2>/dev/null)
-            out="$OUTDIR/$ID/mni/${metric}_MNI.nii.gz"
-            flirt -in "$in" -ref "$FA_TMPL" -applyxfm -init "$OUTDIR/$ID/subj2MNI.mat" -out "$out"
-        done
-
-        FA="$OUTDIR/$ID/mni/FA_MNI.nii.gz"
-        MD="$OUTDIR/$ID/mni/MD_MNI.nii.gz"
-        RD="$OUTDIR/$ID/mni/RD_MNI.nii.gz"
-        AD="$OUTDIR/$ID/mni/L1_MNI.nii.gz"
-        REF="$FA"
-
-        echo "[INFO] Finished affine registration."
-
-    else
-        echo "[ERROR] No valid DTI maps found for $ID"
+    if [ -z "$FA_IMG" ]; then
+        echo "[WARN] No valid FA file for $ID, skipping subject"
         continue
     fi
 
-    # ------------------------------------------------------
-    # BUILD + RESAMPLE MASKS FOR THIS SUBJECT
-    # ------------------------------------------------------
-    ROISUBDIR="$OUTDIR/$ID/roi"
-    mkdir -p "$ROISUBDIR"
+    # ------------------
+    # REGISTER IF NEEDED
+    # ------------------
+    SUBJ_OUT="$OUTDIR/$ID"
+    mkdir -p "$SUBJ_OUT"
 
-    make_mask () {  # idx, name
-        idx=$1
-        name=$2
+    FA_MNI="$SUBJ_OUT/FA_MNI.nii.gz"
 
-        fslmaths "$ATLAS" -thr "$idx" -uthr "$idx" -bin "$ROISUBDIR/${name}_mask_1mm.nii.gz"
+    if [[ "$FA_IMG" == *tbdti_FA* ]]; then
+        cp "$FA_IMG" "$FA_MNI"
+    else
+        MAT="$SUBJ_OUT/subj2MNI.mat"
 
-        flirt -in "$ROISUBDIR/${name}_mask_1mm.nii.gz" \
-              -ref "$REF" \
-              -applyxfm -usesqform \
-              -interp nearestneighbour \
-              -out "$ROISUBDIR/${name}_mask_ref.nii.gz"
-    }
+        flirt -in "$FA_IMG" -ref "$FA_TMPL" -omat "$MAT" -dof 12 2>/dev/null || {
+            echo "[WARN] Registration failed for $ID, skipping subject"
+            continue
+        }
 
-    make_mask $UF_L_IDX JHU_UF_L
-    make_mask $UF_R_IDX JHU_UF_R
-    make_mask $CgC_L_IDX JHU_CgC_L
-    make_mask $CgC_R_IDX JHU_CgC_R
+        flirt -in "$FA_IMG" -ref "$FA_TMPL" -applyxfm -init "$MAT" -out "$FA_MNI" 2>/dev/null || {
+            echo "[WARN] Applyxfm failed for $ID, skipping subject"
+            continue
+        }
+    fi
 
-    # ------------------------------------------------------
-    # METRIC EXTRACTION
-    # ------------------------------------------------------
-    extract () { # img, roi_name, metric
-        IMG="$1"
-        ROI="$2"
-        MET="$3"
+    if [ ! -s "$FA_MNI" ]; then
+        echo "[WARN] FA_MNI empty for $ID, skipping subject"
+        continue
+    fi
 
-        stats=$(fslstats "$IMG" -k "$ROISUBDIR/${ROI}_mask_ref.nii.gz" -M -S -V)
-        echo "$ID,$MODE,$ROI,$MET,$(echo $stats | tr ' ' ',')" >> "$CSV"
-    }
+    # ------------------
+    # ROI MASKS + EXTRACTION
+    # ------------------
+    for ROI in "${!ROIS[@]}"; do
+        IDX=${ROIS[$ROI]}
+        MASK="$SUBJ_OUT/${ROI}_mask.nii.gz"
 
-    for ROI in JHU_UF_L JHU_UF_R JHU_CgC_L JHU_CgC_R; do
-        extract "$FA"  "$ROI" FA
-        extract "$MD"  "$ROI" MD
-        extract "$RD"  "$ROI" RD
-        extract "$AD"  "$ROI" AD
+        fslmaths "$FSLDIR/data/atlases/JHU/JHU-ICBM-labels-1mm.nii.gz" \
+            -thr "$IDX" -uthr "$IDX" -bin "$MASK" 2>/dev/null || continue
+
+        extract_fa "$FA_MNI" "$MASK" "$ID" "$ROI"
     done
 
-    # QC images
-    slicer "$REF" "$ROISUBDIR/JHU_UF_L_mask_ref.nii.gz" -a "$OUTDIR/qc/${ID}_UF_L.png" || true
-    slicer "$REF" "$ROISUBDIR/JHU_UF_R_mask_ref.nii.gz" -a "$OUTDIR/qc/${ID}_UF_R.png" || true
-    slicer "$REF" "$ROISUBDIR/JHU_CgC_L_mask_ref.nii.gz" -a "$OUTDIR/qc/${ID}_CgC_L.png" || true
-    slicer "$REF" "$ROISUBDIR/JHU_CgC_R_mask_ref.nii.gz" -a "$OUTDIR/qc/${ID}_CgC_R.png" || true
-
-    echo "[DONE] Processed $ID"
+    echo "[DONE] $ID"
 done
 
-echo "========================================"
-echo "[FINISHED] Combined CSV saved to:"
-echo "$CSV"
-echo "QC images saved to: $OUTDIR/qc/"
-echo "========================================"
+echo "[INFO] FA-only ROI extraction finished: $(date)"
