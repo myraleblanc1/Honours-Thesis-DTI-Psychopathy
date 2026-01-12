@@ -16,7 +16,7 @@ for subj in $SUBJECT_DIR/*; do
     if [[ -d "$subj" ]]; then
 
         ID=$(basename "$subj")
-        FA_IMAGE="$subj/rdti_FA_FA_to_target.nii.gz"
+        FA_IMAGE="$subj/tbdti_FA.nii.gz"
 
         if [[ ! -f "$FA_IMAGE" ]]; then
             echo "Skipping $ID (no FA image)"
