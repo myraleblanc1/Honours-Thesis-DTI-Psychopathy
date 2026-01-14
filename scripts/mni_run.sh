@@ -12,7 +12,7 @@ TEMPLATE="$FSLDIR/data/standard/FMRIB58_FA_1mm.nii.gz"
 
 OUT_CSV="$OUT_DIR/roi_metrics.csv"
 
-# Write header once
+# Write heL1er once
 if [ ! -f "$OUT_CSV" ]; then
   echo "subject,roi,metric,value" > "$OUT_CSV"
 fi
@@ -27,7 +27,7 @@ for subj in "$RAW_DIR"/M*; do
     echo "Processing $ID"
 
     FA="$subj/rdti_FA.nii.gz"
-    AD="$subj/rdti_AD.nii.gz"
+    L1="$subj/rdti_L1.nii.gz"
     RD="$subj/rdti_RD.nii.gz"
     MD="$subj/rdti_MD.nii.gz"
 
@@ -60,10 +60,10 @@ for subj in "$RAW_DIR"/M*; do
       --config=FA_2_FMRIB58_1mm
 
     # ==================================================
-    # 2. APPLY FA WARP TO AD / RD / MD
+    # 2. APPLY FA WARP TO L1 / RD / MD
     # ==================================================
 
-    for METRIC in AD RD MD; do
+    for METRIC in L1 RD MD; do
         applywarp \
           --in="$subj/rdti_${METRIC}.nii.gz" \
           --ref="$TEMPLATE" \
@@ -76,7 +76,7 @@ for subj in "$RAW_DIR"/M*; do
     # ==================================================
 
     for ROI in UF_L UF_R DC_L DC_R; do
-        for METRIC in FA AD RD MD; do
+        for METRIC in FA L1 RD MD; do
 
             MEAN=$(fslstats \
               "$SUBJ_OUT/rdti_${METRIC}_MNI.nii.gz" \
