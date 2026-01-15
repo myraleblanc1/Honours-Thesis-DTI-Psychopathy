@@ -17,7 +17,7 @@ tail -n +2 "$CSV" | while IFS=, read -r subj _; do
     echo ">>> Processing $subj"
 
     # Find all matching DTI stats directories using shell globs (GVFS-safe)
-    matches=( "$BASE/$subj"/Study*/analysis/dti_*/dirall/*/tbss/stats )
+    matches=( "$BASE/$subj"/Study*/analysis/dti_*/dirall/fsl41/tbss/FA )
 
     # Check if anything matched
     if [[ ! -d "${matches[0]}" ]]; then
