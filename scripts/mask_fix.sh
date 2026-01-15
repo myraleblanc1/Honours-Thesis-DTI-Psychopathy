@@ -20,7 +20,7 @@ done
 #==================================
 # Skeletonise the masks
 #==================================
-for roi in TBSS_GROUP/rois_resamp/*_tbss.nii.gz; do
+for roi in TBSS_GROUP/rois_tbss/*_tbss.nii.gz; do
     name=$(basename "$roi" _tbss.nii.gz)
 
     fslmaths "$roi" \
