@@ -4,7 +4,7 @@ mkdir -p TBSS_GROUP/rois_tbss
 mkdir -p TBSS_GROUP/rois_skel
 #==================================
 # Resample masks into TBSS space
-#==================================
+#=================================
 for roi in data/rois/*.nii.gz; do
     name=$(basename "$roi" .nii.gz)
 
@@ -12,11 +12,10 @@ for roi in data/rois/*.nii.gz; do
       -in "$roi" \
       -ref TBSS_GROUP/stats/mean_FA.nii.gz \
       -applyxfm \
-      -init $FSLDIR/etc/flirtsch/ident.mat \
+      -usesqform \
       -interp nearestneighbour \
       -out TBSS_GROUP/rois_tbss/${name}_tbss.nii.gz
 done
-
 #==================================
 # Skeletonise the masks
 #==================================
