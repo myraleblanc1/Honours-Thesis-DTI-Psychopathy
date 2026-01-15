@@ -9,7 +9,7 @@ OUT="$TBSS_DIR/outputs"
 SUBJECTS="$TBSS_DIR/subject_order.txt"
 
 METRICS=("FA" "RD" "L1" "MD")
-ROIS_LIST=("JHU_UF_L_skel" "JHU_UF_R_skel" "JHU_DC_L_skel" "JHU_DC_R_skel")
+ROIS_LIST=("UF_L_skel" "UF_R_skel" "DC_L_skel" "DC_R_skel")
 
 OUTCSV="$OUT/tbss_roi_values.csv"
 mkdir -p "$OUT"
