@@ -1,22 +1,14 @@
-PROJECT_ROOT="/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy"
-ORIGDATA="$PROJECT_ROOT/TBSS_GROUP/origdata"
+cd /home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/TBSS_GROUP/origdata
 
-cd "$ORIGDATA"
+for fa in *.nii.gz; do
+    # only act on FA files (no suffix)
+    if [[ "$fa" != *_RD.nii.gz && "$fa" != *_L1.nii.gz && "$fa" != *_MD.nii.gz ]]; then
+        subj=$(basename "$fa" .nii.gz)
 
-for fa in *_FA.nii.gz; do
-    base=$(basename "$fa" .nii.gz)
-
-    subj=${base%_FA}
-
-    RD="${subj}_RD.nii.gz"
-    L1="${subj}_L1.nii.gz"
-    MD="${subj}_MD.nii.gz"
-
-    if [[ -f "$RD" && -f "$L1" && -f "$MD" ]]; then
-        mv "$RD" "${base}_RD.nii.gz"
-        mv "$L1" "${base}_L1.nii.gz"
-        mv "$MD" "${base}_MD.nii.gz"
-    else
-        echo "[WARNING] Missing RD/L1/MD for $subj"
+        for metric in RD L1 MD; do
+            if [[ -f "${subj}_${metric}.nii.gz" ]]; then
+                ln -sf "${subj}_${metric}.nii.gz" "${subj}_FA_${metric}.nii.gz"
+            fi
+        done
     fi
 done
