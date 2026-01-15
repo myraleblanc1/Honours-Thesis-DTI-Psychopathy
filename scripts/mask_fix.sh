@@ -10,7 +10,7 @@ for roi in data/rois/*.nii.gz; do
 
     flirt \
       -in "$roi" \
-      -ref TBSS_GROUP/stats/mean_FA_skeleton_mask.nii.gz \
+      -ref TBSS_GROUP/stats/mean_FA.nii.gz \
       -applyxfm \
       -init $FSLDIR/etc/flirtsch/ident.mat \
       -interp nearestneighbour \
