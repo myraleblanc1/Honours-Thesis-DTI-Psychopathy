@@ -12,10 +12,11 @@ for roi in data/rois/*.nii.gz; do
       -in "$roi" \
       -ref TBSS_GROUP/stats/mean_FA_skeleton.nii.gz \
       -applyxfm \
-      -usesqform \
+      -init $FSLDIR/etc/flirtsch/ident.mat \
       -interp nearestneighbour \
-      -out TBSS_GROUP/rois_resamp/${name}_tbss.nii.gz
+      -out TBSS_GROUP/rois_tbss/${name}_tbss.nii.gz
 done
+
 #==================================
 # Skeletonise the masks
 #==================================
