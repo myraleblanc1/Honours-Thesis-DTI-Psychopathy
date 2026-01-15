@@ -10,7 +10,7 @@ for roi in data/rois/*.nii.gz; do
 
     flirt \
       -in "$roi" \
-      -ref TBSS_GROUP/stats/mean_FA_skeleton.nii.gz \
+      -ref TBSS_GROUP/stats/mean_FA_skeleton_mask.nii.gz \
       -applyxfm \
       -init $FSLDIR/etc/flirtsch/ident.mat \
       -interp nearestneighbour \
@@ -24,6 +24,6 @@ for roi in TBSS_GROUP/rois_tbss/*_tbss.nii.gz; do
     name=$(basename "$roi" _tbss.nii.gz)
 
     fslmaths "$roi" \
-      -mas TBSS_GROUP/stats/mean_FA_skeleton.nii.gz \
+      -mas TBSS_GROUP/stats/mean_FA_skeleton_mask.nii.gz \
       TBSS_GROUP/rois_skel/${name}_skel.nii.gz
 done
