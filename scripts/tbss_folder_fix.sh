@@ -9,28 +9,26 @@ cd "$TBSS_DIR"
 
 mkdir -p RD L1 MD
 
-for fa in "$ORIGDATA"/*.nii.gz; do
-    fname=$(basename "$fa")
+echo "[INFO] Matching non-FA maps to FA basenames..."
 
-    # skip non-FA metrics
-    case "$fname" in
-        *_RD.nii.gz|*_L1.nii.gz|*_MD.nii.gz) continue ;;
-    esac
-
-    subj="${fname%.nii.gz}"
+for fa in FA/*_FA.nii.gz; do
+    fa_base=$(basename "$fa" .nii.gz)      # e.g. M87192571_FA
+    subj="${fa_base%_FA}"                  # e.g. M87192571
 
     RD_SRC="$ORIGDATA/${subj}_RD.nii.gz"
     L1_SRC="$ORIGDATA/${subj}_L1.nii.gz"
     MD_SRC="$ORIGDATA/${subj}_MD.nii.gz"
 
     if [[ ! -f "$RD_SRC" || ! -f "$L1_SRC" || ! -f "$MD_SRC" ]]; then
-        echo "[WARNING] Missing RD/L1/MD for $subj"
+        echo "[WARNING] Missing RD/L1/MD for $subj — skipping"
         continue
     fi
 
-    cp "$RD_SRC" "RD/${subj}.nii.gz"
-    cp "$L1_SRC" "L1/${subj}.nii.gz"
-    cp "$MD_SRC" "MD/${subj}.nii.gz"
+    cp "$RD_SRC" "RD/${fa_base}.nii.gz"
+    cp "$L1_SRC" "L1/${fa_base}.nii.gz"
+    cp "$MD_SRC" "MD/${fa_base}.nii.gz"
+
+    echo "  ✔ $fa_base"
 done
 
-echo "[DONE] RD/L1/MD folders populated"
+echo "[DONE] RD / L1 / MD filenames now match FA exactly."
