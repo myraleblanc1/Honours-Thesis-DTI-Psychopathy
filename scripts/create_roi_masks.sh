@@ -14,4 +14,4 @@ fslmaths $ATLAS -thr 22 -uthr 22 -bin $ROI_DIR/UF_R.nii.gz
 fslmaths $ATLAS -thr 31 -uthr 31 -bin $ROI_DIR/DC_L.nii.gz
 
 # Dorsal Cingulum Right (CgC, label 32)
-fslmaths $ATLAS -thr 32 -uthr 32 -bin $ROI_DIR/DC_R.nii.gz"
+fslmaths $ATLAS -thr 32 -uthr 32 -bin $ROI_DIR/DC_R.nii.gz
