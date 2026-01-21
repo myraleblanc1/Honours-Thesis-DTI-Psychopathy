@@ -3,11 +3,11 @@
 SUBJECT_DIR='/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/raw'
 ROI_DIR='/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/rois'
 
-# Use the RESAMPLED ROI masks
-UF_L="$ROI_DIR/UF_L_resampled.nii.gz"
-UF_R="$ROI_DIR/UF_R_resampled.nii.gz"
-DC_L="$ROI_DIR/DC_L_resampled.nii.gz"
-DC_R="$ROI_DIR/DC_R_resampled.nii.gz"
+# ROI masks
+UF_L="$ROI_DIR/UF_L.nii.gz"
+UF_R="$ROI_DIR/UF_R.nii.gz"
+DC_L="$ROI_DIR/DC_L.nii.gz"
+DC_R="$ROI_DIR/DC_R.nii.gz"
 
 OUTPUT='/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/processed/roi_RD_values.csv'
 echo "Subject,UF_L_RD,UF_R_RD,DC_L_RD,DC_R_RD" > $OUTPUT
@@ -16,7 +16,7 @@ for subj in $SUBJECT_DIR/*; do
     if [[ -d "$subj" ]]; then
 
         ID=$(basename "$subj")
-        RD_IMAGE="$subj/tbdti_RD.nii.gz"
+        RD_IMAGE="$subj/rdti_RD_to_target.nii.gz"
 
         if [[ ! -f "$RD_IMAGE" ]]; then
             echo "Skipping $ID (no RD image)"
