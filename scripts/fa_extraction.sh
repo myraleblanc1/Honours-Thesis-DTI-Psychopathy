@@ -1,37 +1,65 @@
-#fa extraction script 
+#!/usr/bin/env bash
+set -euo pipefail
 
-SUBJECT_DIR='/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/raw'
-ROI_DIR='/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/rois'
+BASEDIR="/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy"
+RAW="$BASEDIR/data/raw"
+ROIS="$BASEDIR/data/rois"
+OUT="$BASEDIR/data/processed/roi_FA_to_target"
 
-# Use the RESAMPLED ROI masks
-UF_L="$ROI_DIR/UF_L_resampled.nii.gz"
-UF_R="$ROI_DIR/UF_R_resampled.nii.gz"
-DC_L="$ROI_DIR/DC_L_resampled.nii.gz"
-DC_R="$ROI_DIR/DC_R_resampled.nii.gz"
+mkdir -p "$OUT"
 
-OUTPUT='/home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/processed/roi_FA_values.csv'
-echo "Subject,UF_L_FA,UF_R_FA,DC_L_FA,DC_R_FA" > $OUTPUT
+CSV="$OUT/roi_FA_results.csv"
+echo "subject,roi,FA_mean,FA_sd,nvox" > "$CSV"
 
-for subj in $SUBJECT_DIR/*; do
-    if [[ -d "$subj" ]]; then
+for SUBJ in "$RAW"/*; do
+    [ -d "$SUBJ" ] || continue
+    ID=$(basename "$SUBJ")
 
-        ID=$(basename "$subj")
-        FA_IMAGE="$subj/rdti_FA_FA_to_target.nii.gz"
+    FA="$SUBJ/rdti_FA_FA_to_target.nii.gz"
 
-        if [[ ! -f "$FA_IMAGE" ]]; then
-            echo "Skipping $ID (no FA image)"
+    if [ ! -s "$FA" ]; then
+        echo "[WARN] Missing FA_to_target for $ID, skipping"
+        continue
+    fi
+
+    echo "[SUBJECT] $ID"
+
+    SUBJ_OUT="$OUT/$ID"
+    mkdir -p "$SUBJ_OUT"
+
+    for ROI in UF_L UF_R DC_L DC_R; do
+        ROI_SRC="$ROIS/${ROI}.nii.gz"
+        ROI_RES="$SUBJ_OUT/${ROI}_resampled.nii.gz"
+
+        if [ ! -s "$ROI_SRC" ]; then
+            echo "[WARN] Missing ROI $ROI_SRC"
             continue
         fi
 
-        echo "Extracting FA for $ID..."
+        # --- RESAMPLE ROI INTO THIS SUBJECT'S FA SPACE ---
+        flirt \
+          -in "$ROI_SRC" \
+          -ref "$FA" \
+          -applyxfm \
+          -usesqform \
+          -interp nearestneighbour \
+          -out "$ROI_RES"
 
-        UF_L_FA=$(fslmeants -i $FA_IMAGE -m $UF_L)
-        UF_R_FA=$(fslmeants -i $FA_IMAGE -m $UF_R)
-        DC_L_FA=$(fslmeants -i $FA_IMAGE -m $DC_L)
-        DC_R_FA=$(fslmeants -i $FA_IMAGE -m $DC_R)
+        # --- EXTRACT FA ---
+        stats=$(fslstats "$FA" -k "$ROI_RES" -M -S -V)
 
-        echo "$ID,$UF_L_FA,$UF_R_FA,$DC_L_FA,$DC_R_FA" >> $OUTPUT
-    fi
+        mean=$(echo "$stats" | awk '{print $1}')
+        sd=$(echo "$stats" | awk '{print $2}')
+        nvox=$(echo "$stats" | awk '{print $3}')
+
+        if [ "$nvox" -eq 0 ]; then
+            echo "[WARN] Zero voxels for $ID $ROI"
+            continue
+        fi
+
+        echo "$ID,$ROI,$mean,$sd,$nvox" >> "$CSV"
+    done
 done
 
-echo "Saved FA ROI table to $OUTPUT"
+echo "[DONE] ROI extraction complete"
+"Saved FA ROI table to $OUTPUT"
