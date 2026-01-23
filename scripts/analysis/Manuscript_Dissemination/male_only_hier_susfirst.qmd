@@ -1,0 +1,98 @@
+---
+title: "male only hier sus first"
+format: docx
+date: today
+editor: visual
+execute:
+  enabled: true
+df-print: kable
+project: 
+  execute-dir: project
+---
+
+# Hierarchical Regression: Male-Only SUS First
+
+## Model 1: FA \~ SUS + Age + IQ
+
+## Model 2: FA \~ PCL-R + Age + IQ + SUS
+
+Load Data
+
+```{r, include=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(here)
+library(knitr)
+```
+
+```{r}
+male_sus_controlled_hier_data <- read_csv(here("data", "raw", "rawdata_prelimSSSP_abstract.csv")) |>
+  filter(Gender == 0) |>
+  rename(
+    age  = Age...6,
+    pclr = `PCL-R Total`,
+    iq   = IQ,
+    sus  = `Total Drug Use`
+  ) |>
+  filter(
+    !is.na(pclr),
+    !is.na(FA_mean)
+  )
+```
+
+Identify ROIs
+
+```{r}
+roi_names <- male_sus_controlled_hier_data |>
+  distinct(roi) |>
+  pull(roi)
+```
+
+Hierarchical model comparison (ROI-wise)
+
+```{r}
+male_sus_controlled_hierarchical_results <- map_dfr(
+  roi_names,
+  function(r) {
+    
+    data_r <- male_sus_controlled_hier_data |> filter(roi == r)
+    
+    # Base model
+    model_1 <- lm(FA_mean ~ sus + age, data = data_r)
+    
+    # Extended model
+    model_2 <- lm(FA_mean ~ pclr + age + iq + sus, data = data_r)
+    
+    # Extract R²
+    r2_m1 <- summary(model_1)$r.squared
+    r2_m2 <- summary(model_2)$r.squared
+    
+    # ΔR² and F-test
+    anova_res <- anova(model_1, model_2)
+    
+    tibble(
+      roi        = r,
+      r2_model1  = r2_m1,
+      r2_model2  = r2_m2,
+      delta_r2   = r2_m2 - r2_m1,
+      f_change   = anova_res$F[2],
+      p_change   = anova_res$`Pr(>F)`[2]
+    )
+  }
+)
+
+male_sus_controlled_hierarchical_results <- 
+  male_sus_controlled_hierarchical_results |>
+  mutate(
+    p_fdr = p.adjust(p_change, method = "fdr")
+  )
+
+
+```
+
+```{r}
+#| execute:
+#|   cache: false
+knitr::kable(male_sus_controlled_hierarchical_results)
+```
+
+\`\`\`{r}
