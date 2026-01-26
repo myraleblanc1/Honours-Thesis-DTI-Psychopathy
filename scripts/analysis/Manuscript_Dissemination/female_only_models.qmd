@@ -1,5 +1,5 @@
 ---
-title: "all gender model 1 & model 2"
+title: "female only model 1 & model 2"
 format: docx
 date: today
 editor: visual
@@ -10,11 +10,11 @@ project:
   execute-dir: project
 ---
 
-# Linear Regression: All Gender
+# Linear Regression: Female-Only (Main Analyses)
 
-## Model 1: FA \~ PCL-R + Gender + Age + IQ
+## Model 1: FA \~ PCL-R + Age + IQ
 
-## Model 2: FA \~ PCL-R + Age + IQ + SUS + Gender
+## Model 2: FA \~ PCL-R + Age + IQ + SUS
 
 Load Data
 
@@ -31,7 +31,8 @@ library(stringr)
 
 ```{r}
 
-roi_fa_allgender <-  read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
+roi_fa_female <-  read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
+filter(Gender == 1)|>
   rename(
     age  = Age...6,
     pclr = `PCL-R Total`,
@@ -47,35 +48,35 @@ roi_fa_allgender <-  read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) 
 Number of Participants
 
 ```{r}
-n_distinct(roi_fa_allgender$subject_id)
+n_distinct(roi_fa_female$subject_id)
 ```
 
-## Model 1: FA \~ PCL-R + Gender + Age + IQ
+## Model 1: FA \~ PCL-R + Age + IQ
 
 ```{r}
-models_fa_m1_gender <- roi_fa_allgender |>
+models_fa_m1_female <- roi_fa_female |>
   group_by(roi) |>
   group_map(
-    ~ lm(FA_mean ~ pclr + age + Gender, data = .x),
+    ~ lm(FA_mean ~ pclr + age, data = .x),
     .keep = TRUE
   )
 
-roi_names_all <- roi_fa_allgender |>
+roi_names_all <- roi_fa_female |>
   distinct(roi) |>
   pull(roi)
 
-names(models_fa_m1_gender) <- roi_names_all
+names(models_fa_m1_female) <- roi_names_all
 
-results_fa_m1_gender <- map_dfr(
-  names(models_fa_m1_gender),
-  ~ tidy(models_fa_m1_gender[[.x]]) |>
+results_fa_m1_female <- map_dfr(
+  names(models_fa_m1_female),
+  ~ tidy(models_fa_m1_female[[.x]]) |>
     mutate(
       roi   = .x,
-      model = "Model 1 (All Genders, Gender-Controlled)"
+      model = "Model 1 (Female-Only Main Analyses)"
     )
 )
 
-results_fa_m1_gender_pclr <- results_fa_m1_gender |>
+results_fa_m1_female_pclr <- results_fa_m1_female |>
   filter(term == "pclr") |>
   mutate(p_fdr = p.adjust(p.value, method = "fdr"))
 
@@ -84,7 +85,7 @@ results_fa_m1_gender_pclr <- results_fa_m1_gender |>
 ```{r}
 #| execute:
 #|   cache: false
-results_fa_m1_gender_pclr |>
+results_fa_m1_female_pclr |>
   select(
     roi,
     estimate,
@@ -96,30 +97,30 @@ results_fa_m1_gender_pclr |>
   arrange(p_fdr)
 ```
 
-## Model 2: FA \~ PCL-R + Age + IQ + SUS + Gender
+## Model 2: FA \~ PCL-R + Age + IQ + SUS
 
 ```{r}
-roi_fa_model2_allgender <- roi_fa_allgender |>
+roi_fa_model2_female <- roi_fa_female |>
   group_by(roi) |>
   group_map(
-    ~ lm(FA_mean ~ pclr + age + Gender + iq + sus, data = .x),
+    ~ lm(FA_mean ~ pclr + age + iq + sus, data = .x),
     .keep = TRUE
   )
 
 
-names(roi_fa_model2_allgender) <- roi_names_all
+names(roi_fa_model2_female) <- roi_names_all
 
-results_roi_fa_model2_allgender <- map_dfr(
-  names(roi_fa_model2_allgender),
-  ~ tidy(roi_fa_model2_allgender[[.x]]) |>
+results_roi_fa_model2_female <- map_dfr(
+  names(roi_fa_model2_female),
+  ~ tidy(roi_fa_model2_female[[.x]]) |>
     mutate(
       roi = .x,
-      model = "Model 2 (All Gender: +IQ +SUS)"
+      model = "Model 2 (Female-Only: +IQ +SUS)"
     )
 )
 
 
-results_roi_fa_model2_pclr_allgender <- results_roi_fa_model2_allgender |>
+results_roi_fa_model2_pclr_female <- results_roi_fa_model2_female |>
   filter(term == "pclr") |>
   mutate(p_fdr = p.adjust(p.value, method = "fdr"))
 
@@ -130,7 +131,7 @@ Simple Output (Just PCL-R Effects)
 ```{r}
 #| execute:
 #|   cache: false
-results_roi_fa_model2_pclr_allgender |>
+results_roi_fa_model2_pclr_female |>
   select(
     roi,
     estimate,
@@ -147,7 +148,7 @@ Full Regression Output
 ```{r}
 #| execute:
 #|   cache: false
-results_apa <- results_roi_fa_model2_allgender |>
+results_apa <- results_roi_fa_model2_female |>
   mutate(
     estimate  = round(estimate, 3),
     statistic = round(statistic, 2),

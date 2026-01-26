@@ -25,7 +25,7 @@ library(knitr)
 ```
 
 ```{r}
-all_gender_controlled_hier_data <- read_csv(here("data", "raw", "rawdata_prelimSSSP_abstract.csv")) |>
+all_gender_controlled_hier_data <- read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
   rename(
     age  = Age...6,
     pclr = `PCL-R Total`,

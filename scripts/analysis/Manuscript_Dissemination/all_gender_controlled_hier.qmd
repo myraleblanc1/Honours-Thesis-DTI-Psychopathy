@@ -24,11 +24,12 @@ Load Data
 library(tidyverse)
 library(here)
 library(knitr)
+library(car)
 ```
 
 
 ```{r}
-all_gender_controlled_hier_data <- read_csv(here("data", "raw", "rawdata_prelimSSSP_abstract.csv")) |>
+all_gender_controlled_hier_data <- read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
   rename(
     age  = Age...6,
     pclr = `PCL-R Total`,
@@ -64,12 +65,20 @@ all_gender_controlled_hierarchical_results <- map_dfr(
     # Extended model
     model_2 <- lm(FA_mean ~ pclr + age + Gender + iq + sus, data = data_r)
     
+    #Calculate semi-partial r^2
+    aov_tab <- Anova(model_2, type = 3)
+    
     # Extract R²
     r2_m1 <- summary(model_1)$r.squared
     r2_m2 <- summary(model_2)$r.squared
     
     # ΔR² and F-test
     anova_res <- anova(model_1, model_2)
+    sr2_pclr <- aov_tab["pclr", "Sum Sq"] / sum(aov_tab[,"Sum Sq"])
+    sr2_sus <- aov_tab["sus", "Sum Sq"] / sum(aov_tab[,"Sum Sq"])
+    sr2_iq <- aov_tab["iq", "Sum Sq"] / sum(aov_tab[,"Sum Sq"])
+    sr2_age <- aov_tab["age", "Sum Sq"] / sum(aov_tab[,"Sum Sq"])
+    sr2_gender <- aov_tab["Gender", "Sum Sq"] / sum(aov_tab[,"Sum Sq"])
     
     tibble(
       roi        = r,
@@ -77,7 +86,12 @@ all_gender_controlled_hierarchical_results <- map_dfr(
       r2_model2  = r2_m2,
       delta_r2   = r2_m2 - r2_m1,
       f_change   = anova_res$F[2],
-      p_change   = anova_res$`Pr(>F)`[2]
+      p_change   = anova_res$`Pr(>F)`[2],
+      sr2_pclr   = sr2_pclr,
+      sr2_sus   = sr2_sus,
+      sr2_iq   = sr2_iq,
+      sr2_age   = sr2_age,
+      sr2_gender = sr2_gender
     )
   }
 )

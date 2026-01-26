@@ -25,7 +25,7 @@ library(knitr)
 ```
 
 ```{r}
-male_sus_controlled_hier_data <- read_csv(here("data", "raw", "rawdata_prelimSSSP_abstract.csv")) |>
+male_sus_controlled_hier_data <- read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
   filter(Gender == 0) |>
   rename(
     age  = Age...6,

@@ -1,0 +1,244 @@
+---
+title: "rd, ad, md, male-only model 1 & 2"
+format: docx
+date: today
+editor: visual
+execute:
+  enabled: true
+df-print: kable
+project: 
+  execute-dir: project
+---
+
+# Linear Regression: Male-Only AD/MD/RD
+
+## Model 1: AD/MD/RD \~ PCL-R + Age + IQ
+
+## Model 2: AD/MD/RD \~ PCL-R + Age + IQ + SUS
+
+Load Data
+
+```{r, include=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(here)
+library(knitr)
+library(broom)
+library(gt)
+library(dplyr)
+library(stringr)
+
+```
+
+```{r}
+
+roi_dti_male <-  read_csv(here("data", "raw", "rawdata_manuscript_MD_AD_RD.csv")) |>
+filter(Gender == 0)|>
+  rename(
+    age  = Age...7,
+    pclr = `PCL-R Total`,
+    iq   = IQ,
+    sus  = `Total Drug Use`
+  ) |>
+  filter(
+    !is.na(pclr)
+  ) |>
+  mutate(
+    metric = recode(
+      metric,
+      "L1" = "AD",
+      "MD" = "MD",
+      "RD" = "RD"
+    )
+)
+
+metrics <- c("AD", "MD", "RD")
+```
+
+Number of Participants
+
+```{r}
+n_distinct(roi_dti_male$subject_id)
+```
+
+## Model 1: AD/RD/MD \~ PCL-R + Age + IQ
+
+```{r}
+results_m1 <- map_dfr(metrics, function(m) {
+
+  roi_dti_male |>
+    filter(metric == m) |>
+    group_by(roi) |>
+    group_map(
+      ~ lm(mean ~ pclr + age + iq, data = .x),
+      .keep = TRUE
+    ) |>
+    set_names(unique(roi_dti_male$roi)) |>
+    imap_dfr(
+      ~ tidy(.x) |>
+        mutate(
+          roi = .y,
+          metric = m,
+          model = "Model 1: MD/AD/RD"
+        )
+    )
+})
+
+results_m1_pclr <- results_m1 |>
+  filter(term == "pclr") |>
+  group_by(metric) |>
+  mutate(p_fdr = p.adjust(p.value, method = "fdr")) |>
+  arrange(metric, p_fdr)
+
+```
+
+Simple Output (Just PCL-R Effects)
+```{r}
+#| execute:
+#|   cache: false
+results_m1_pclr |>
+  select(
+    roi,
+    estimate,
+    std.error,
+    statistic,
+    p.value,
+    p_fdr
+  ) |>
+  arrange(p_fdr)
+```
+
+Full Regression Output
+```{r}
+#| execute:
+#|   cache: false
+results_apa <- results_m1 |>
+  mutate(
+    estimate  = round(estimate, 3),
+    statistic = round(statistic, 2),
+    p.value   = round(p.value, 3),
+    sig = case_when(
+      p.value < .001 ~ "***",
+      p.value < .01  ~ "**",
+      p.value < .05  ~ "*",
+      TRUE           ~ ""
+    ),
+    estimate = paste0(estimate, sig)
+  ) |>
+  select(metric, roi, term, estimate, statistic, p.value)
+
+results_apa |>
+  gt(groupname_col = "metric") |>
+  tab_header(
+    title = md("**Linear regression predicting DTI metrics (Model 1)**")
+  ) |>
+  cols_label(
+    term      = "Predictor",
+    estimate  = html("Estimate (<i>&beta;</i>)"),
+    statistic = "t",
+    p.value   = html("<i>p</i>"),
+    roi       = "ROI"
+  ) |>
+  tab_source_note(
+    source_note = md(
+      "*Note.* AD = axial diffusivity (L1), MD = mean diffusivity, RD = radial diffusivity.  
+      *p* < .05*, **p* < .01**, ***p* < .001."
+    )
+  ) |>
+  tab_options(
+    table.font.size = 11,
+    data_row.padding = px(4)
+  )
+```
+
+## Model 2: FA \~ PCL-R + Age + IQ + SUS
+
+```{r}
+results_m2 <- map_dfr(metrics, function(m) {
+
+  roi_dti_male |>
+    filter(metric == m) |>
+    group_by(roi) |>
+    group_map(
+      ~ lm(mean ~ pclr + age + iq + sus, data = .x),
+      .keep = TRUE
+    ) |>
+    set_names(unique(roi_dti_male$roi)) |>
+    imap_dfr(
+      ~ tidy(.x) |>
+        mutate(
+          roi = .y,
+          metric = m,
+          model = "Model 2"
+        )
+    )
+})
+
+results_m2_pclr <- results_m2 |>
+  filter(term == "pclr") |>
+  group_by(metric) |>
+  mutate(p_fdr = p.adjust(p.value, method = "fdr")) |>
+  arrange(metric, p_fdr)
+
+```
+
+Simple Output (Just PCL-R Effects)
+
+```{r}
+#| execute:
+#|   cache: false
+results_m2_pclr |>
+  select(
+    roi,
+    estimate,
+    std.error,
+    statistic,
+    p.value,
+    p_fdr
+  ) |>
+  arrange(p_fdr)
+```
+
+Full Regression Output
+
+```{r}
+#| execute:
+#|   cache: false
+results_apa <- results_m2 |>
+  mutate(
+    estimate  = round(estimate, 3),
+    statistic = round(statistic, 2),
+    p.value   = round(p.value, 3),
+    sig = case_when(
+      p.value < .001 ~ "***",
+      p.value < .01  ~ "**",
+      p.value < .05  ~ "*",
+      TRUE           ~ ""
+    ),
+    estimate = paste0(estimate, sig)
+  ) |>
+  select(metric, roi, term, estimate, statistic, p.value)
+
+results_apa |>
+  gt(groupname_col = "metric") |>
+  tab_header(
+    title = md("**Hierarchical regression predicting DTI metrics (Model 2)**")
+  ) |>
+  cols_label(
+    term      = "Predictor",
+    estimate  = html("Estimate (<i>&beta;</i>)"),
+    statistic = "t",
+    p.value   = html("<i>p</i>"),
+    roi       = "ROI"
+  ) |>
+  tab_source_note(
+    source_note = md(
+      "*Note.* AD = axial diffusivity (L1), MD = mean diffusivity, RD = radial diffusivity.  
+      *p* < .05*, **p* < .01**, ***p* < .001."
+    )
+  ) |>
+  tab_options(
+    table.font.size = 11,
+    data_row.padding = px(4)
+  )
+
+```

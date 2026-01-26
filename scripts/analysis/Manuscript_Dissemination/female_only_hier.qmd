@@ -1,5 +1,5 @@
 ---
-title: "male_only_hier"
+title: "female only hier"
 format: docx
 date: today
 editor: visual
@@ -8,10 +8,9 @@ execute:
 df-print: kable
 project: 
   execute-dir: project
-
 ---
 
-# Hierarchical Regression: Male-Only
+# Hierarchical Regression: Female-Only
 
 ## Model 1: FA \~ PCL-R + Age
 
@@ -29,8 +28,8 @@ library(car)
 
 
 ```{r}
-male_controlled_hier_data <- read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
-  filter(Gender == 0) |>
+female_controlled_hier_data <- read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
+  filter(Gender == 1) |>
   rename(
     age  = Age...6,
     pclr = `PCL-R Total`,
@@ -46,7 +45,7 @@ male_controlled_hier_data <- read_csv(here("data", "raw", "rawdata_manuscript_FA
 Identify ROIs
 
 ```{r}
-roi_names <- male_controlled_hier_data |>
+roi_names <- female_controlled_hier_data |>
   distinct(roi) |>
   pull(roi)
 ```
@@ -54,11 +53,11 @@ roi_names <- male_controlled_hier_data |>
 Hierarchical model comparison (ROI-wise)
 
 ```{r}
-male_controlled_hierarchical_results <- map_dfr(
+female_controlled_hierarchical_results <- map_dfr(
   roi_names,
   function(r) {
     
-    data_r <- male_controlled_hier_data |> filter(roi == r)
+    data_r <- female_controlled_hier_data |> filter(roi == r)
     
     # Base model
     model_1 <- lm(FA_mean ~ pclr + age, data = data_r)
@@ -84,6 +83,7 @@ male_controlled_hierarchical_results <- map_dfr(
       roi        = r,
       r2_model1  = r2_m1,
       r2_model2  = r2_m2,
+      delta_r2   = r2_m2 - r2_m1,
       f_change   = anova_res$F[2],
       p_change   = anova_res$`Pr(>F)`[2],
       sr2_pclr   = sr2_pclr,
@@ -94,8 +94,8 @@ male_controlled_hierarchical_results <- map_dfr(
   }
 )
 
-male_controlled_hierarchical_results <- 
-  male_controlled_hierarchical_results |>
+female_controlled_hierarchical_results <- 
+  female_controlled_hierarchical_results |>
   mutate(
     p_fdr = p.adjust(p_change, method = "fdr")
   )
@@ -107,7 +107,7 @@ male_controlled_hierarchical_results <-
 ```{r}
 #| execute:
 #|   cache: false
-knitr::kable(male_controlled_hierarchical_results)
+knitr::kable(female_controlled_hierarchical_results)
 ```
 
 
