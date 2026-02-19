@@ -1,0 +1,196 @@
+---
+title: "descriptives"
+format: docx
+date: today
+editor: visual
+execute:
+  enabled: true
+df-print: kable
+project: 
+  execute-dir: project
+---
+
+Load Data
+
+```{r, include=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(here)
+library(knitr)
+library(broom)
+library(gt)
+library(dplyr)
+library(stringr)
+library(purrr)
+library(tidyr)
+
+```
+
+```{r}
+
+roi_fa_allgender <-  read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
+  rename(
+    age  = Age...6,
+    factor1 = `Factor 1.y`,
+    factor2 = `Factor 2.y`,
+    iq   = IQ.x,
+    sus  = `Total Drug Use`,
+    pclr = `PCL-R Total`, 
+  ) 
+
+roi_fa_male <-  read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
+  filter(Gender == 0)|>
+  rename(
+    age  = Age...6,
+    factor1 = `Factor 1.y`,
+    factor2 = `Factor 2.y`,
+    iq   = IQ.x,
+    sus  = `Total Drug Use`,
+    pclr = `PCL-R Total`, 
+  ) 
+
+roi_fa_female <-  read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
+  filter(Gender == 1)|>
+  rename(
+    age  = Age...6,
+    factor1 = `Factor 1.y`,
+    factor2 = `Factor 2.y`,
+    iq   = IQ.x,
+    sus  = `Total Drug Use`,
+    pclr = `PCL-R Total`, 
+  ) 
+```
+## All Gender
+Number of Participants
+
+```{r}
+n_distinct(roi_fa_allgender$subject_id)
+```
+
+Age 
+```{r}
+range(roi_fa_allgender$age, na.rm = TRUE)
+mean(roi_fa_allgender$age, na.rm = TRUE)
+```
+IQ
+
+```{r}
+range(roi_fa_allgender$iq, na.rm = TRUE)
+mean(roi_fa_allgender$iq, na.rm = TRUE)
+```
+PCL-R
+
+```{r}
+range(roi_fa_allgender$pclr, na.rm = TRUE)
+mean(roi_fa_allgender$pclr, na.rm = TRUE)
+sd(roi_fa_allgender$pclr, na.rm = TRUE)
+```
+
+Factor 1 
+```{r}
+range(roi_fa_allgender$factor1, na.rm = TRUE)
+mean(roi_fa_allgender$factor1, na.rm = TRUE)
+sd(roi_fa_allgender$factor1, na.rm = TRUE)
+```
+
+Factor 2
+```{r}
+range(roi_fa_allgender$factor2, na.rm = TRUE)
+mean(roi_fa_allgender$factor2, na.rm = TRUE)
+sd(roi_fa_allgender$factor2, na.rm = TRUE)
+```
+
+SUS
+```{r}
+range(roi_fa_allgender$sus, na.rm = TRUE)
+mean(roi_fa_allgender$sus, na.rm = TRUE)
+```
+
+#Male
+
+Number of Participants
+
+```{r}
+n_distinct(roi_fa_male$subject_id)
+```
+
+Age 
+```{r}
+range(roi_fa_male$age, na.rm = TRUE)
+mean(roi_fa_male$age, na.rm = TRUE)
+```
+IQ
+
+```{r}
+range(roi_fa_male$iq, na.rm = TRUE)
+mean(roi_fa_male$iq, na.rm = TRUE)
+```
+PCL-R
+
+```{r}
+range(roi_fa_male$pclr, na.rm = TRUE)
+mean(roi_fa_male$pclr, na.rm = TRUE)
+sd(roi_fa_male$pclr, na.rm = TRUE)
+```
+
+Factor 1 
+```{r}
+range(roi_fa_male$factor1, na.rm = TRUE)
+mean(roi_fa_male$factor1, na.rm = TRUE)
+```
+
+Factor 2
+```{r}
+range(roi_fa_male$factor2, na.rm = TRUE)
+mean(roi_fa_male$factor2, na.rm = TRUE)
+```
+
+SUS
+```{r}
+range(roi_fa_male$sus, na.rm = TRUE)
+mean(roi_fa_male$sus, na.rm = TRUE)
+```
+
+#Female
+
+Number of Participants
+
+```{r}
+n_distinct(roi_fa_female$subject_id)
+```
+
+Age 
+```{r}
+range(roi_fa_female$age, na.rm = TRUE)
+mean(roi_fa_female$age, na.rm = TRUE)
+```
+IQ
+
+```{r}
+range(roi_fa_female$iq, na.rm = TRUE)
+mean(roi_fa_female$iq, na.rm = TRUE)
+```
+PCL-R
+
+```{r}
+range(roi_fa_female$pclr, na.rm = TRUE)
+mean(roi_fa_female$pclr, na.rm = TRUE)
+sd(roi_fa_female$pclr, na.rm = TRUE)
+```
+
+Factor 1 
+```{r}
+range(roi_fa_female$factor1, na.rm = TRUE)
+mean(roi_fa_female$factor1, na.rm = TRUE)
+```
+
+Factor 2
+```{r}
+range(roi_fa_female$factor2, na.rm = TRUE)
+mean(roi_fa_female$factor2, na.rm = TRUE)
+```
+
+SUS
+```{r}
+range(roi_fa_female$sus, na.rm = TRUE)
+mean(roi_fa_female$sus, na.rm = TRUE)
+```

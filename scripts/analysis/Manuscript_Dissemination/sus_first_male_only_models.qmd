@@ -1,5 +1,5 @@
 ---
-title: "male-only model 1 & model 2"
+title: "male only sus first models"
 format: docx
 date: today
 editor: visual
@@ -10,9 +10,10 @@ project:
   execute-dir: project
 ---
 
-# Linear Regression: Male-Only (Main Analyses)
 
-## Model 1: FA \~ PCL-R + Age
+# Linear Regression: SUS First Male-Only (Main Analyses)
+
+## Model 1: FA \~ SUS + Age
 
 ## Model 2: FA \~ PCL-R + Age + IQ + SUS
 
@@ -26,8 +27,6 @@ library(broom)
 library(gt)
 library(dplyr)
 library(stringr)
-library(purrr)
-library(tidyr)
 
 ```
 
@@ -53,36 +52,15 @@ Number of Participants
 n_distinct(roi_fa_male$subject_id)
 ```
 
-## Model 1: FA \~ PCL-R + Age
+## Model 1: FA \~ SUS + Age
 
 ```{r}
 models_fa_m1_male <- roi_fa_male |>
   group_by(roi) |>
   group_map(
-    ~ lm(FA_mean ~ pclr + age, data = .x),
+    ~ lm(FA_mean ~ sus + age, data = .x),
     .keep = TRUE
   )
-
-#effect size calculations for model
-f2_pred_by_roi <- roi_fa_male |>
-  group_by(roi) |>
-  group_modify(\(.x, .y) {
-
-    full <- lm(FA_mean ~ pclr + age, data = .x)
-    R2_full <- summary(full)$r.squared
-
-    preds <- c("pclr", "age")
-
-    f2s <- map_dbl(preds, \(p) {
-      reduced <- update(full, paste(". ~ . -", p))
-      R2_red <- summary(reduced)$r.squared
-      (R2_full - R2_red) / (1 - R2_full)
-    })
-
-    tibble(term = preds, f2 = f2s)
-  }) |>
-  ungroup()
-
 
 roi_names_all <- roi_fa_male |>
   distinct(roi) |>
@@ -99,17 +77,16 @@ results_fa_m1_male <- map_dfr(
     )
 )
 
-results_fa_m1_male_pclr <- results_fa_m1_male |>
-  filter(term == "pclr") |>
+results_fa_m1_male_sus <- results_fa_m1_male |>
+  filter(term == "sus") |>
   mutate(p_fdr = p.adjust(p.value, method = "fdr"))
 
 ```
 
-Simple Output (Just PCL-R Effects)
 ```{r}
 #| execute:
 #|   cache: false
-results_fa_m1_male_pclr |>
+results_fa_m1_male_sus |>
   select(
     roi,
     estimate,
@@ -121,74 +98,6 @@ results_fa_m1_male_pclr |>
   arrange(p_fdr)
 ```
 
-Full Regression Output 
-```{r}
-#| execute:
-#|   cache: false
-results_apa <- results_fa_m1_male |>
-  left_join(f2_pred_by_roi, by = c("term", "roi")) |>
-  mutate(
-    estimate  = round(estimate, 5),
-    statistic = round(statistic, 2),
-    p.value   = round(p.value, 3),
-    sig = case_when(
-      p.value < .001 ~ "***",
-      p.value < .01  ~ "**",
-      p.value < .05  ~ "*",
-      TRUE           ~ ""
-    ),
-    estimate = paste0(estimate, sig)
-  ) |>
-  select(
-    term,
-    estimate,
-    statistic,
-    p.value,
-    roi,
-    model,
-    f2
-  )
-
-results_apa |>
-  gt() |>
-  tab_header(
-    title = md("**Table X**"),
-    subtitle = md("*Linear regression predicting FA (Model 1)*")
-  ) |>
-  cols_label(
-    term      = "Predictor",
-    estimate  = html("Estimate (<i>&beta;</i>)"),
-    statistic = "t",
-    p.value   = html("<i>p</i>"),
-    f2 = html("Cohen’s <i>f</i><sup>2</sup>"),
-    roi       = "ROI",
-    model     = "Model"
-  ) |>
-  fmt_number(
-    columns = c(statistic, p.value),
-    decimals = 3
-  ) |>
-  tab_source_note(
-    source_note = md(
-      "*Note.* FA = fractional anisotropy. Estimates are standardized regression coefficients. \
-      *p* < .05*, **p* < .01**, ***p* < .001."
-    )
-  ) |>
-  tab_options(
-    table.border.top.style = "solid",
-    table.border.bottom.style = "solid",
-    column_labels.border.top.style = "solid",
-    column_labels.border.bottom.style = "solid",
-    table_body.border.bottom.style = "solid",
-    table.border.left.style = "none",
-    table.border.right.style = "none",
-    heading.border.bottom.style = "none",
-    column_labels.font.weight = "bold",
-    table.font.size = 11,
-    data_row.padding = px(4)
-  )
-```
-
 ## Model 2: FA \~ PCL-R + Age + IQ + SUS
 
 ```{r}
@@ -198,26 +107,6 @@ roi_fa_model2_male <- roi_fa_male |>
     ~ lm(FA_mean ~ pclr + age + iq + sus, data = .x),
     .keep = TRUE
   )
-
-#effect size calculations for model
-f2_pred_by_roi_m2 <- roi_fa_male |>
-  group_by(roi) |>
-  group_modify(\(.x, .y) {
-
-    full <- lm(FA_mean ~ pclr + age + iq + sus, data = .x)
-    R2_full <- summary(full)$r.squared
-
-    preds <- c("pclr", "age", "iq", "sus")
-
-    f2s <- map_dbl(preds, \(p) {
-      reduced <- update(full, paste(". ~ . -", p))
-      R2_red <- summary(reduced)$r.squared
-      (R2_full - R2_red) / (1 - R2_full)
-    })
-
-    tibble(term = preds, f2 = f2s)
-  }) |>
-  ungroup()
 
 
 names(roi_fa_model2_male) <- roi_names_all
@@ -232,18 +121,18 @@ results_roi_fa_model2_male <- map_dfr(
 )
 
 
-results_roi_fa_model2_pclr_male <- results_roi_fa_model2_male |>
-  filter(term == "pclr") |>
+results_roi_fa_model2_sus_male <- results_roi_fa_model2_male |>
+  filter(term == "sus") |>
   mutate(p_fdr = p.adjust(p.value, method = "fdr"))
 
 ```
 
-Simple Output (Just PCL-R Effects)
+Simple Output (Just SUS Effects)
 
 ```{r}
 #| execute:
 #|   cache: false
-results_roi_fa_model2_pclr_male |>
+results_roi_fa_model2_sus_male |>
   select(
     roi,
     estimate,
@@ -260,12 +149,7 @@ Full Regression Output
 ```{r}
 #| execute:
 #|   cache: false
-
-
-
-
 results_apa <- results_roi_fa_model2_male |>
-  left_join(f2_pred_by_roi_m2, by = c("term", "roi")) |>
   mutate(
     estimate  = round(estimate, 3),
     statistic = round(statistic, 2),
@@ -284,8 +168,7 @@ results_apa <- results_roi_fa_model2_male |>
     statistic,
     p.value,
     roi,
-    model,
-    f2
+    model
   )
 
 results_apa |>
@@ -299,7 +182,6 @@ results_apa |>
     estimate  = html("Estimate (<i>&beta;</i>)"),
     statistic = "t",
     p.value   = html("<i>p</i>"),
-    f2 = html("Cohen’s <i>f</i><sup>2</sup>"),
     roi       = "ROI",
     model     = "Model"
   ) |>

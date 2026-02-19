@@ -1,5 +1,5 @@
 ---
-title: "md/ad/rd all gender models"
+title: "male ad md rd models - 2 rois"
 format: docx
 date: today
 editor: visual
@@ -10,12 +10,11 @@ project:
   execute-dir: project
 ---
 
+# 2 ROIs: Linear Regression: Male AD/MD/RD
 
-# Linear Regression: All Gender AD/MD/RD
+## Model 1: AD/MD/RD \~ PCL-R + Age + IQ
 
-## Model 1: AD/MD/RD \~ PCL-R + Age + IQ + Gender
-
-## Model 2: AD/MD/RD \~ PCL-R + Age + IQ + SUS + Gender
+## Model 2: AD/MD/RD \~ PCL-R + Age + IQ + SUS
 
 Load Data
 
@@ -32,7 +31,8 @@ library(stringr)
 
 ```{r}
 
-roi_dti_allgender <-  read_csv(here("data", "raw", "rawdata_manuscript_MD_AD_RD.csv"))|>
+roi_dti_male <-  read_csv(here("data", "raw", "rawdata_manuscript_MD_AD_RD.csv")) |>
+filter(Gender == 0)|>
   rename(
     age  = Age...7,
     pclr = `PCL-R Total`,
@@ -57,37 +57,68 @@ metrics <- c("AD", "MD", "RD")
 Number of Participants
 
 ```{r}
-n_distinct(roi_dti_allgender$subject_id)
+n_distinct(roi_dti_male$subject_id)
 ```
 
 ## Collapse UF and DC ROIs
 ```{r}
+roi_dti_male <- roi_dti_male %>%
+  mutate(
+    tract = case_when(
+      str_detect(roi, "UF")  ~ "UF",
+      str_detect(roi, "CgC") ~ "DC",
+      TRUE ~ NA_character_
+    ),
+    hemi = case_when(
+      str_detect(roi, "_L$") ~ "L",
+      str_detect(roi, "_R$") ~ "R",
+      TRUE ~ NA_character_
+    )
+  )
+
+roi_dti_male <- roi_dti_male %>%
+  filter(!is.na(tract), !is.na(hemi)) %>%
+  group_by(
+    subject_id,
+    metric,
+    tract,
+    pclr,
+    iq,
+    age,
+    sus,
+    Gender
+  ) %>%
+  summarise(
+    mean = mean(mean, na.rm = TRUE),
+    .groups = "drop"
+  )
 
 ```
 
 
-## Model 1: AD/RD/MD \~ PCL-R + Age + Gender
+## Model 1: AD/RD/MD \~ PCL-R + Age
 
 ```{r}
 results_m1 <- map_dfr(metrics, function(m) {
 
-  roi_dti_allgender |>
-    filter(metric == m) |>
-    group_by(roi) |>
-    group_map(
-      ~ lm(mean ~ pclr + age + Gender, data = .x),
-      .keep = TRUE
-    ) |>
-    set_names(unique(roi_dti_allgender$roi)) |>
-    imap_dfr(
-      ~ tidy(.x) |>
-        mutate(
-          roi = .y,
-          metric = m,
-          model = "Model 1: MD/AD/RD"
-        )
-    )
+  dat_m <- roi_dti_male %>%
+    filter(metric == m) %>%
+    group_by(tract)
+
+  groups <- group_split(dat_m, .keep = TRUE)
+  keys   <- group_keys(dat_m)$tract
+
+  map2_dfr(groups, keys, ~
+    tidy(lm(mean ~ pclr + age + Gender, data = .x)) %>%
+      mutate(
+        tract  = .y,
+        metric = m,
+        model  = "Model 1"
+      )
+  )
 })
+
+
 
 results_m1_pclr <- results_m1 |>
   filter(term == "pclr") |>
@@ -103,7 +134,7 @@ Simple Output (Just PCL-R Effects)
 #|   cache: false
 results_m1_pclr |>
   select(
-    roi,
+    tract,
     estimate,
     std.error,
     statistic,
@@ -119,9 +150,9 @@ Full Regression Output
 #|   cache: false
 results_apa <- results_m1 |>
   mutate(
-    estimate  = round(estimate, 3),
-    statistic = round(statistic, 2),
-    p.value   = round(p.value, 3),
+    estimate  = round(estimate, 5),
+    statistic = round(statistic, 5),
+    p.value   = round(p.value, 4),
     sig = case_when(
       p.value < .001 ~ "***",
       p.value < .01  ~ "**",
@@ -130,7 +161,7 @@ results_apa <- results_m1 |>
     ),
     estimate = paste0(estimate, sig)
   ) |>
-  select(metric, roi, term, estimate, statistic, p.value)
+  select(metric, tract, term, estimate, statistic, p.value)
 
 results_apa |>
   gt(groupname_col = "metric") |>
@@ -142,7 +173,7 @@ results_apa |>
     estimate  = html("Estimate (<i>&beta;</i>)"),
     statistic = "t",
     p.value   = html("<i>p</i>"),
-    roi       = "ROI"
+    tract       = "ROI"
   ) |>
   tab_source_note(
     source_note = md(
@@ -156,23 +187,23 @@ results_apa |>
   )
 ```
 
-## Model 2: FA \~ PCL-R + Age + IQ + SUS + Gender
+## Model 2: FA \~ PCL-R + Age + IQ + SUS
 
 ```{r}
 results_m2 <- map_dfr(metrics, function(m) {
 
-  roi_dti_allgender |>
+  roi_dti_male |>
     filter(metric == m) |>
-    group_by(roi) |>
+    group_by(tract) |>
     group_map(
       ~ lm(mean ~ pclr + age + iq + sus + Gender, data = .x),
       .keep = TRUE
     ) |>
-    set_names(unique(roi_dti_allgender$roi)) |>
+    set_names(unique(roi_dti_male$tract)) |>
     imap_dfr(
       ~ tidy(.x) |>
         mutate(
-          roi = .y,
+          tract = .y,
           metric = m,
           model = "Model 2"
         )
@@ -194,7 +225,7 @@ Simple Output (Just PCL-R Effects)
 #|   cache: false
 results_m2_pclr |>
   select(
-    roi,
+    tract,
     estimate,
     std.error,
     statistic,
@@ -222,7 +253,7 @@ results_apa <- results_m2 |>
     ),
     estimate = paste0(estimate, sig)
   ) |>
-  select(metric, roi, term, estimate, statistic, p.value)
+  select(metric, tract, term, estimate, statistic, p.value)
 
 results_apa |>
   gt(groupname_col = "metric") |>
@@ -234,7 +265,7 @@ results_apa |>
     estimate  = html("Estimate (<i>&beta;</i>)"),
     statistic = "t",
     p.value   = html("<i>p</i>"),
-    roi       = "ROI"
+    tract       = "ROI"
   ) |>
   tab_source_note(
     source_note = md(
