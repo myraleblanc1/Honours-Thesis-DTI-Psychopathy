@@ -1,0 +1,8 @@
+[INFO] Starting batch ROI extraction
+[INFO] Raw folder: /home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/raw
+[INFO] Output folder: /home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/processed/roi_batch
+[INFO] Using JHU Labels atlas indices:
+[INFO] UF_L=48 UF_R=47 CgC_L=36 CgC_R=35
+-------------------------
+[SUBJECT] M87100419
+[INFO] Found native-space maps; registering to MNI…

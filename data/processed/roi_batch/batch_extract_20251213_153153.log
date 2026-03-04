@@ -1,0 +1,56 @@
+[INFO] Starting batch ROI extraction
+[INFO] Raw folder: /home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/raw
+[INFO] Output folder: /home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/processed/roi_batch
+[INFO] Using JHU Labels atlas indices:
+[INFO] UF_L=48 UF_R=47 CgC_L=36 CgC_R=35
+-------------------------
+[SUBJECT] M87100419
+[INFO] Using STANDARD-space files
+[DONE] Processed M87100419
+-------------------------
+[SUBJECT] M87102777
+[INFO] Using STANDARD-space files
+[DONE] Processed M87102777
+-------------------------
+[SUBJECT] M87103423
+[INFO] Using STANDARD-space files
+[DONE] Processed M87103423
+-------------------------
+[SUBJECT] M87104357
+[INFO] Using STANDARD-space files
+[DONE] Processed M87104357
+-------------------------
+[SUBJECT] M87104386
+[INFO] Using STANDARD-space files
+[DONE] Processed M87104386
+-------------------------
+[SUBJECT] M87104519
+[INFO] Using STANDARD-space files
+[DONE] Processed M87104519
+-------------------------
+[SUBJECT] M87105294
+[INFO] Using STANDARD-space files
+[DONE] Processed M87105294
+-------------------------
+[SUBJECT] M87105367
+[INFO] Using STANDARD-space files
+[DONE] Processed M87105367
+-------------------------
+[SUBJECT] M87105824
+[INFO] Using STANDARD-space files
+[DONE] Processed M87105824
+-------------------------
+[SUBJECT] M87105955
+[INFO] Using STANDARD-space files
+[DONE] Processed M87105955
+-------------------------
+[SUBJECT] M87107379
+[INFO] Found native-space maps; registering to MNI…
+Image Exception : #22 :: Failed to read volume /home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/raw/M87107379/rdti_FA_FA_to_target.nii.gz
+Error : Error: short read, file may be truncated
+Failed to read volume /home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/raw/M87107379/rdti_FA_FA_to_target.nii.gz
+Error : Error: short read, file may be truncated
+Image Exception : #22 :: Failed to read volume /home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/raw/M87107379/rdti_FA_FA_to_target.nii.gz
+Error : Error: short read, file may be truncated
+Failed to read volume /home/mleblanc/DTI_Psychopathy/Honours-Thesis-DTI-Psychopathy/data/raw/M87107379/rdti_FA_FA_to_target.nii.gz
+Error : Error: short read, file may be truncated
