@@ -34,11 +34,8 @@ library(tidyr)
 ```{r}
 
 roi_fa_male <-  read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
-filter(Gender == 0)|>
+filter(gender == 0)|>
   rename(
-    age  = Age...6,
-    pclr = `PCL-R Total`,
-    iq   = IQ,
     sus  = `Total Drug Use`
   ) |>
   filter(
@@ -106,6 +103,7 @@ results_fa_m1_male_pclr <- results_fa_m1_male |>
 ```
 
 Simple Output (Just PCL-R Effects)
+
 ```{r}
 #| execute:
 #|   cache: false
@@ -121,16 +119,19 @@ results_fa_m1_male_pclr |>
   arrange(p_fdr)
 ```
 
-Full Regression Output 
+Full Regression Output
+
 ```{r}
 #| execute:
 #|   cache: false
 results_apa <- results_fa_m1_male |>
   left_join(f2_pred_by_roi, by = c("term", "roi")) |>
+  left_join(results_fa_m1_male_pclr |> select(roi, term, p_fdr), by = c("term", "roi")) |>
   mutate(
-    estimate  = round(estimate, 5),
+    estimate  = round(estimate, 4),
     statistic = round(statistic, 2),
-    p.value   = round(p.value, 3),
+    p.value   = round(p.value, 5),
+    p_fdr = round(p_fdr, 5),
     sig = case_when(
       p.value < .001 ~ "***",
       p.value < .01  ~ "**",
@@ -145,8 +146,8 @@ results_apa <- results_fa_m1_male |>
     statistic,
     p.value,
     roi,
-    model,
-    f2
+    f2,
+    p_fdr
   )
 
 results_apa |>
@@ -162,15 +163,15 @@ results_apa |>
     p.value   = html("<i>p</i>"),
     f2 = html("Cohen’s <i>f</i><sup>2</sup>"),
     roi       = "ROI",
-    model     = "Model"
+    p_fdr = html("<i>p</i> (FDR-corrected)")
   ) |>
   fmt_number(
-    columns = c(statistic, p.value),
+    columns = c(statistic, p.value, p_fdr),
     decimals = 3
   ) |>
   tab_source_note(
     source_note = md(
-      "*Note.* FA = fractional anisotropy. Estimates are standardized regression coefficients. \
+      "*Note.* FA = fractional anisotropy. JHU_CgC_L = left DC. JHU_CgC_R = right DC. JHU_UF_L = left UF. JHU_UF_R = right UF. \
       *p* < .05*, **p* < .01**, ***p* < .001."
     )
   ) |>
@@ -266,10 +267,11 @@ Full Regression Output
 
 results_apa <- results_roi_fa_model2_male |>
   left_join(f2_pred_by_roi_m2, by = c("term", "roi")) |>
+  left_join(results_roi_fa_model2_pclr_male |> select(roi, term, p_fdr), by = c("term", "roi")) |>
   mutate(
     estimate  = round(estimate, 3),
     statistic = round(statistic, 2),
-    p.value   = round(p.value, 3),
+    p.value   = round(p.value, 5),
     sig = case_when(
       p.value < .001 ~ "***",
       p.value < .01  ~ "**",
@@ -284,8 +286,8 @@ results_apa <- results_roi_fa_model2_male |>
     statistic,
     p.value,
     roi,
-    model,
-    f2
+    f2,
+    p_fdr
   )
 
 results_apa |>
@@ -301,15 +303,15 @@ results_apa |>
     p.value   = html("<i>p</i>"),
     f2 = html("Cohen’s <i>f</i><sup>2</sup>"),
     roi       = "ROI",
-    model     = "Model"
+    p_fdr = html("<i>p</i> (FDR-corrected)")
   ) |>
   fmt_number(
-    columns = c(statistic, p.value),
+    columns = c(statistic, p.value, p_fdr),
     decimals = 3
   ) |>
   tab_source_note(
     source_note = md(
-      "*Note.* FA = fractional anisotropy. Estimates are standardized regression coefficients. \
+      "*Note.* FA = fractional anisotropy. JHU_CgC_L = left DC. JHU_CgC_R = right DC. JHU_UF_L = left UF. JHU_UF_R = right UF. \
       *p* < .05*, **p* < .01**, ***p* < .001."
     )
   ) |>

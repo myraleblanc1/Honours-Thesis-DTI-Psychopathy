@@ -1,0 +1,150 @@
+---
+title: "male_models_graphs"
+format: docx
+date: today
+editor: visual
+execute:
+  enabled: true
+df-print: kable
+project: 
+  execute-dir: project
+---
+
+## Male-only Models Graphs
+
+Load Data
+
+```{r, include=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(here)
+library(knitr)
+library(broom)
+library(gt)
+library(dplyr)
+library(stringr)
+library(purrr)
+library(tidyr)
+library(ggplot2)
+
+```
+
+```{r}
+
+roi_fa_male <-  read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
+filter(gender == 0)|>
+  rename(
+    sus  = `Total Drug Use`
+  ) |>
+  filter(
+    !is.na(pclr),
+    !is.na(FA_mean)
+  )
+```
+
+## Model 1
+Partial Effects Plot
+```{r}
+plots_m1 <- roi_fa_male %>%
+  group_by(roi) %>%
+  nest() %>%
+  mutate(
+    # Fit Model 1
+    fit = map(data, ~ lm(FA_mean ~ pclr + age, data = .x)),
+
+    # Prediction grid: pclr 0–40, age held at ROI mean
+    pred = map2(data, fit, ~ {
+      age_mean <- mean(.x$age, na.rm = TRUE)
+
+      newdat <- tibble(
+        pclr = seq(0, 40, by = 1),
+        age  = age_mean
+      )
+
+      p <- predict(.y, newdata = newdat, se.fit = TRUE)
+
+      newdat %>%
+        mutate(
+          fit = as.numeric(p$fit),
+          se  = as.numeric(p$se.fit),
+          lo  = fit - 1.96 * se,
+          hi  = fit + 1.96 * se
+        )
+    }),
+
+    # SAME STRUCTURE AS MODEL 2
+    plot = pmap(list(data, pred, roi), ~
+      ggplot() +
+        geom_point(data = ..1, aes(x = pclr, y = FA_mean), alpha = 0.6) +
+        geom_ribbon(data = ..2, aes(x = pclr, ymin = lo, ymax = hi), alpha = 0.2) +
+        geom_line(data = ..2, aes(x = pclr, y = fit), linewidth = 1) +
+        coord_cartesian(xlim = c(0, 40), ylim = c(0.35, 0.6)) +
+        labs(
+          title = paste0("Model 1 (age-controlled): ", ..3),
+          subtitle = "Predicted FA across PCL-R, age held at ROI mean",
+          x = "PCL-R Total Score",
+          y = "Mean Fractional Anisotropy (FA)"
+        ) +
+        theme_minimal()
+    )
+  ) %>%
+  pull(plot)
+
+walk(plots_m1, print)
+```
+## Model 2
+Partial Effects Plot
+```{r}
+
+plots_m2 <- roi_fa_male %>%
+  group_by(roi) %>%
+  nest() %>%
+  mutate(
+    # Fit Model 2 within each ROI
+    fit = map(data, ~ lm(FA_mean ~ pclr + age + iq + sus, data = .x)),
+
+    # Prediction grid: pclr from 0 to 40, other covariates held at ROI means
+    pred = map2(data, fit, ~ {
+      age_mean <- mean(.x$age, na.rm = TRUE)
+      iq_mean  <- mean(.x$iq,  na.rm = TRUE)
+      sus_mean <- mean(.x$sus, na.rm = TRUE)
+
+      newdat <- tibble(
+        pclr = seq(0, 40, by = 1),
+        age  = age_mean,
+        iq   = iq_mean,
+        sus  = sus_mean
+      )
+
+      p <- predict(.y, newdata = newdat, se.fit = TRUE)
+
+      newdat %>%
+        mutate(
+          fit = as.numeric(p$fit),
+          se  = as.numeric(p$se.fit),
+          lo  = fit - 1.96 * se,
+          hi  = fit + 1.96 * se
+        )
+    }),
+
+    # Plot: raw points + age/iq/sus-controlled prediction line + 95% CI ribbon
+    # IMPORTANT FIX: roi is NOT inside nested data after nest(), so pass it in via pmap
+    plot = pmap(list(data, pred, roi), ~
+      ggplot() +
+        geom_point(data = ..1, aes(x = pclr, y = FA_mean), alpha = 0.6) +
+        geom_ribbon(data = ..2, aes(x = pclr, ymin = lo, ymax = hi), alpha = 0.2) +
+        geom_line(data = ..2, aes(x = pclr, y = fit), linewidth = 1) +
+        coord_cartesian(xlim = c(0, 40), ylim = c(0.35, 0.6)) +
+        labs(
+          title = paste0("Model 2 (covariate-controlled): ", ..3),
+          subtitle = "Predicted FA across PCL-R, age, IQ, and SUS held at ROI means",
+          x = "PCL-R Total Score",
+          y = "Mean Fractional Anisotropy (FA)"
+        ) +
+        theme_minimal()
+    )
+  ) %>%
+  pull(plot)
+
+walk(plots_m2, print)
+```
+

@@ -33,15 +33,13 @@ library(stringr)
 
 roi_fa_allgender <-  read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
   rename(
-    age  = Age...6,
-    pclr = `PCL-R Total`,
-    iq   = IQ,
     sus  = `Total Drug Use`
   ) |>
   filter(
     !is.na(pclr),
     !is.na(FA_mean)
   )
+  
 ```
 
 Number of Participants
@@ -56,7 +54,7 @@ n_distinct(roi_fa_allgender$subject_id)
 models_fa_m1_gender <- roi_fa_allgender |>
   group_by(roi) |>
   group_map(
-    ~ lm(FA_mean ~ pclr + age + Gender, data = .x),
+    ~ lm(FA_mean ~ pclr + age + gender, data = .x),
     .keep = TRUE
   )
 
@@ -96,13 +94,82 @@ results_fa_m1_gender_pclr |>
   arrange(p_fdr)
 ```
 
-## Model 2: FA \~ PCL-R + Age + IQ + SUS + Gender
+
+Full Regression Output
+
+```{r}
+#| execute:
+#|   cache: false
+results_apa <- results_fa_m1_gender |>
+  left_join(results_fa_m1_gender_pclr |> select(roi, term, p_fdr), by = c("term", "roi")) |>
+  mutate(
+    estimate  = round(estimate, 4),
+    statistic = round(statistic, 2),
+    p.value   = round(p.value, 5),
+    p_fdr = round(p_fdr, 5),
+    sig = case_when(
+      p.value < .001 ~ "***",
+      p.value < .01  ~ "**",
+      p.value < .05  ~ "*",
+      TRUE           ~ ""
+    ),
+    estimate = paste0(estimate, sig)
+  ) |>
+  select(
+    term,
+    estimate,
+    statistic,
+    p.value,
+    roi,
+    p_fdr
+  )
+
+results_apa |>
+  gt() |>
+  tab_header(
+    title = md("**Table X**"),
+    subtitle = md("*Linear regression predicting FA (Model 1)*")
+  ) |>
+  cols_label(
+    term      = "Predictor",
+    estimate  = html("Estimate (<i>&beta;</i>)"),
+    statistic = "t",
+    p.value   = html("<i>p</i>"),
+    roi       = "ROI",
+    p_fdr = html("<i>p</i> (FDR-corrected)")
+  ) |>
+  fmt_number(
+    columns = c(statistic, p.value, p_fdr),
+    decimals = 3
+  ) |>
+  tab_source_note(
+    source_note = md(
+      "*Note.* FA = fractional anisotropy. JHU_CgC_L = left DC. JHU_CgC_R = right DC. JHU_UF_L = left UF. JHU_UF_R = right UF. \
+      *p* < .05*, **p* < .01**, ***p* < .001."
+    )
+  ) |>
+  tab_options(
+    table.border.top.style = "solid",
+    table.border.bottom.style = "solid",
+    column_labels.border.top.style = "solid",
+    column_labels.border.bottom.style = "solid",
+    table_body.border.bottom.style = "solid",
+    table.border.left.style = "none",
+    table.border.right.style = "none",
+    heading.border.bottom.style = "none",
+    column_labels.font.weight = "bold",
+    table.font.size = 11,
+    data_row.padding = px(4)
+  )
+```
+
+## Model 2: FA \~ PCL-R + Age + IQ + SUS + gender
 
 ```{r}
 roi_fa_model2_allgender <- roi_fa_allgender |>
   group_by(roi) |>
   group_map(
-    ~ lm(FA_mean ~ pclr + age + Gender + iq + sus, data = .x),
+    ~ lm(FA_mean ~ pclr + age + gender + iq + sus, data = .x),
     .keep = TRUE
   )
 
@@ -148,6 +215,7 @@ Full Regression Output
 #| execute:
 #|   cache: false
 results_apa <- results_roi_fa_model2_allgender |>
+  left_join(results_roi_fa_model2_pclr_allgender |> select(roi, term, p_fdr), by = c("term", "roi")) |>
   mutate(
     estimate  = round(estimate, 3),
     statistic = round(statistic, 2),
@@ -166,7 +234,7 @@ results_apa <- results_roi_fa_model2_allgender |>
     statistic,
     p.value,
     roi,
-    model
+    p_fdr
   )
 
 results_apa |>
@@ -181,10 +249,10 @@ results_apa |>
     statistic = "t",
     p.value   = html("<i>p</i>"),
     roi       = "ROI",
-    model     = "Model"
+    p_fdr = html("<i>p</i> (FDR-corrected)")
   ) |>
   fmt_number(
-    columns = c(statistic, p.value),
+    columns = c(statistic, p.value, p_fdr),
     decimals = 3
   ) |>
   tab_source_note(

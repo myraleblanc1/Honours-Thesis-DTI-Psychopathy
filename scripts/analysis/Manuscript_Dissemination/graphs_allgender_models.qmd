@@ -1,0 +1,259 @@
+---
+title: "all gender graphs"
+format: docx
+date: today
+editor: visual
+execute:
+  enabled: true
+df-print: kable
+project: 
+  execute-dir: project
+---
+
+## Male-only Models Graphs
+
+Load Data
+
+```{r, include=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(here)
+library(knitr)
+library(broom)
+library(gt)
+library(dplyr)
+library(stringr)
+library(purrr)
+library(tidyr)
+library(ggplot2)
+
+```
+
+```{r}
+
+roi_fa_allgender <-  read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
+  rename(
+    sus  = `Total Drug Use`
+  ) |>
+  filter(
+    !is.na(pclr),
+    !is.na(FA_mean)
+  )
+
+roi_fa_allgender$gender <- factor(roi_fa_allgender$gender) 
+
+
+roi_fa_allgender <- roi_fa_allgender %>%
+  mutate(
+    gender = factor(gender,
+                    levels = c(0, 1),
+                    labels = c("Male", "Female"))
+  )
+
+roi_fa_allgender <- roi_fa_allgender %>%
+  mutate(
+    roi = recode(roi,
+      "JHU_CgC_L" = "Left DC",
+      "JHU_CgC_R" = "Right DC",
+      "JHU_UF_L"  = "Left UF",
+      "JHU_UF_R"  = "Right UF"
+    )
+  )
+```
+
+
+## Model 1
+Partial Effects Plot
+```{r}
+plots_m1_all <- roi_fa_allgender %>%
+  group_by(roi) %>%
+  nest() %>%
+  mutate(
+    # Fit Model 1
+    fit = map(data, ~ lm(FA_mean ~ pclr + age + gender, data = .x)),
+
+    # Prediction grid: pclr 0–40, covariates at ROI means,
+    # predictions generated for BOTH genders
+    pred = map2(data, fit, ~ {
+
+      age_mean <- mean(.x$age, na.rm = TRUE)
+     
+      genders <- levels(.x$gender)
+
+      newdat <- expand.grid(
+        pclr   = seq(0, 40, by = 1),
+        gender = genders
+      ) %>%
+        as_tibble() %>%
+        mutate(
+          age = age_mean,
+        )
+
+      p <- predict(.y, newdata = newdat, se.fit = TRUE)
+
+      newdat %>%
+        mutate(
+          fit = as.numeric(p$fit),
+          se  = as.numeric(p$se.fit),
+          lo  = fit - 1.96 * se,
+          hi  = fit + 1.96 * se
+        )
+    }),
+
+    plot = pmap(list(data, pred, roi), ~
+      ggplot() +
+        geom_point(data = ..1, aes(x = pclr, y = FA_mean), alpha = 0.5) +
+        geom_ribbon(data = ..2,
+                    aes(x = pclr, ymin = lo, ymax = hi, fill = gender),
+                    alpha = 0.15) +
+        geom_line(data = ..2,
+                  aes(x = pclr, y = fit, color = gender),
+                  linewidth = 1.1) +
+        coord_cartesian(xlim = c(0, 40), ylim = c(0.35, 0.6)) +
+        labs(
+          title = paste0("Model 1 (age, gender controlled): ", ..3),
+          subtitle = "Predicted FA across PCL-R for each gender",
+          x = "PCL-R Total Score",
+          y = "Mean Fractional Anisotropy (FA)",
+          color = "Gender",
+          fill  = "Gender"
+        ) +
+        theme_minimal()
+    )
+  ) %>%
+  pull(plot)
+
+walk(plots_m1_all, print)
+```
+
+## Model 2
+Partial Effects Plot
+```{r}
+plots_m2_all <- roi_fa_allgender %>%
+  group_by(roi) %>%
+  nest() %>%
+  mutate(
+    # Fit Model 2
+    fit = map(data, ~ lm(FA_mean ~ pclr + age + iq + sus + gender, data = .x)),
+
+    # Prediction grid: pclr 0–40, covariates held at ROI means
+    # gender held at reference level
+    pred = map2(data, fit, ~ {
+
+      age_mean <- mean(.x$age, na.rm = TRUE)
+      iq_mean  <- mean(.x$iq,  na.rm = TRUE)
+      sus_mean <- mean(.x$sus, na.rm = TRUE)
+      ref_gender <- levels(.x$gender)[1]
+
+      newdat <- tibble(
+        pclr   = seq(0, 40, by = 1),
+        age    = age_mean,
+        iq     = iq_mean,
+        sus    = sus_mean,
+        gender = ref_gender
+      )
+
+      p <- predict(.y, newdata = newdat, se.fit = TRUE)
+
+      newdat %>%
+        mutate(
+          fit = as.numeric(p$fit),
+          se  = as.numeric(p$se.fit),
+          lo  = fit - 1.96 * se,
+          hi  = fit + 1.96 * se
+        )
+    }),
+
+    plot = pmap(list(data, pred, roi), ~
+      ggplot() +
+        geom_point(data = ..1, aes(x = pclr, y = FA_mean), alpha = 0.6) +
+        geom_ribbon(data = ..2,
+                    aes(x = pclr, ymin = lo, ymax = hi),
+                    alpha = 0.2) +
+        geom_line(data = ..2,
+                  aes(x = pclr, y = fit),
+                  linewidth = 1) +
+        coord_cartesian(xlim = c(0, 40), ylim = c(0.35, 0.6)) +
+        labs(
+          title = paste0("Model 2 (age, IQ, SUS, gender controlled): ", ..3),
+          subtitle = paste(
+            "Age, IQ, SUS held at ROI means | Gender =",
+            levels(..1$gender)[1]
+          ),
+          x = "PCL-R Total Score",
+          y = "Mean Fractional Anisotropy (FA)"
+        ) +
+        theme_minimal()
+    )
+  ) %>%
+  pull(plot)
+
+walk(plots_m2_all, print)
+```
+
+Two Prediction Lines
+```{r}
+plots_m2_all <- roi_fa_allgender %>%
+  group_by(roi) %>%
+  nest() %>%
+  mutate(
+    # Fit Model 2
+    fit = map(data, ~ lm(FA_mean ~ pclr + age + iq + sus + gender, data = .x)),
+
+    # Prediction grid: pclr 0–40, covariates at ROI means,
+    # predictions generated for BOTH genders
+    pred = map2(data, fit, ~ {
+
+      age_mean <- mean(.x$age, na.rm = TRUE)
+      iq_mean  <- mean(.x$iq,  na.rm = TRUE)
+      sus_mean <- mean(.x$sus, na.rm = TRUE)
+
+      genders <- levels(.x$gender)
+
+      newdat <- expand.grid(
+        pclr   = seq(0, 40, by = 1),
+        gender = genders
+      ) %>%
+        as_tibble() %>%
+        mutate(
+          age = age_mean,
+          iq  = iq_mean,
+          sus = sus_mean
+        )
+
+      p <- predict(.y, newdata = newdat, se.fit = TRUE)
+
+      newdat %>%
+        mutate(
+          fit = as.numeric(p$fit),
+          se  = as.numeric(p$se.fit),
+          lo  = fit - 1.96 * se,
+          hi  = fit + 1.96 * se
+        )
+    }),
+
+    plot = pmap(list(data, pred, roi), ~
+      ggplot() +
+        geom_point(data = ..1, aes(x = pclr, y = FA_mean), alpha = 0.5) +
+        geom_ribbon(data = ..2,
+                    aes(x = pclr, ymin = lo, ymax = hi, fill = gender),
+                    alpha = 0.15) +
+        geom_line(data = ..2,
+                  aes(x = pclr, y = fit, color = gender),
+                  linewidth = 1.1) +
+        coord_cartesian(xlim = c(0, 40), ylim = c(0.35, 0.6)) +
+        labs(
+          title = paste0("Model 2 (age, IQ, SUS controlled): ", ..3),
+          subtitle = "Predicted FA across PCL-R for each gender",
+          x = "PCL-R Total Score",
+          y = "Mean Fractional Anisotropy (FA)",
+          color = "Gender",
+          fill  = "Gender"
+        ) +
+        theme_minimal()
+    )
+  ) %>%
+  pull(plot)
+
+walk(plots_m2_all, print)
+```
+

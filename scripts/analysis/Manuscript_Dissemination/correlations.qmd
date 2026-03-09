@@ -1,0 +1,193 @@
+---
+title: "Correlations FA MD RD AD"
+format: docx
+date: today
+editor: visual
+execute:
+  enabled: true
+df-print: kable
+project: 
+  execute-dir: project
+---
+
+Load Data
+
+```{r, include=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(here)
+library(knitr)
+library(broom)
+library(gt)
+library(dplyr)
+library(stringr)
+
+```
+
+##MD RD AD Correlations
+```{r}
+
+roi_dti_allgender <-  read_csv(here("data", "raw", "rawdata_manuscript_MD_AD_RD.csv"))|>
+  rename(
+    sus  = `Total Drug Use`
+  ) |>
+  filter(
+    !is.na(pclr)
+  ) |>
+  mutate(
+    metric = recode(
+      metric,
+      "L1" = "AD",
+      "MD" = "MD",
+      "RD" = "RD"
+    )
+)
+
+roi_dti_male <-  read_csv(here("data", "raw", "rawdata_manuscript_MD_AD_RD.csv"))|>
+  filter(gender == 0) |>
+  rename(
+    sus  = `Total Drug Use`
+  ) |>
+  filter(
+    !is.na(pclr)
+  ) |>
+  mutate(
+    metric = recode(
+      metric,
+      "L1" = "AD",
+      "MD" = "MD",
+      "RD" = "RD"
+    )
+)
+
+roi_dti_female <-  read_csv(here("data", "raw", "rawdata_manuscript_MD_AD_RD.csv"))|>
+  filter(gender == 1) |>
+  rename(
+    sus  = `Total Drug Use`
+  ) |>
+  filter(
+    !is.na(pclr)
+  ) |>
+  mutate(
+    metric = recode(
+      metric,
+      "L1" = "AD",
+      "MD" = "MD",
+      "RD" = "RD"
+    )
+)
+
+metrics <- c("AD", "MD", "RD")
+```
+
+Number of Participants
+
+```{r}
+n_distinct(roi_dti_allgender$subject_id)
+```
+
+
+Correlations
+```{r}
+library(dplyr)
+library(broom)
+
+#All Gender
+cor_results <- roi_dti_allgender %>%
+  group_by(metric, roi) %>%
+  do(tidy(cor.test(.$mean, .$pclr, method = "pearson"))) %>%
+  ungroup()
+
+cor_results %>%
+  select(metric, roi, estimate, p.value)
+
+#Male
+cor_results_male <- roi_dti_male %>%
+  group_by(metric, roi) %>%
+  do(tidy(cor.test(.$mean, .$pclr, method = "pearson"))) %>%
+  ungroup()
+
+cor_results_male %>%
+  select(metric, roi, estimate, p.value)
+
+#Female
+cor_results_female <- roi_dti_female %>%
+  group_by(metric, roi) %>%
+  do(tidy(cor.test(.$mean, .$pclr, method = "pearson"))) %>%
+  ungroup()
+
+cor_results_female %>%
+  select(metric, roi, estimate, p.value)
+```
+
+##FA Correlations
+
+```{r}
+
+roi_fa_allgender <-  read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
+  rename(
+    sus  = `Total Drug Use`
+  ) |>
+  filter(
+    !is.na(pclr),
+    !is.na(FA_mean)
+  )
+roi_fa_male <-  read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
+  filter(gender ==0)|>
+  rename(
+    sus  = `Total Drug Use`
+  ) |>
+  filter(
+    !is.na(pclr),
+    !is.na(FA_mean)
+  )
+
+roi_fa_female <-  read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
+  filter(gender ==1)|>
+  rename(
+    sus  = `Total Drug Use`
+  ) |>
+  filter(
+    !is.na(pclr),
+    !is.na(FA_mean)
+  )
+```
+
+All gender
+```{r}
+cor_results_allgender <- roi_fa_allgender |>
+  group_by(roi) |>
+  do(tidy(cor.test(.$FA_mean, .$pclr, method = "pearson"))) %>%
+  ungroup()
+
+cor_results_allgender |>
+  select(roi, estimate, p.value)
+
+
+```
+
+
+Male
+```{r}
+cor_results_male <- roi_fa_male %>%
+  group_by(roi) |>
+  do(tidy(cor.test(.$FA_mean, .$pclr, method = "pearson"))) %>%
+  ungroup()
+
+cor_results_male |>
+  select(roi, estimate, p.value)
+
+
+```
+
+Female
+```{r}
+cor_results_female <- roi_fa_female %>%
+  group_by(roi) |>
+  do(tidy(cor.test(.$FA_mean, .$pclr, method = "pearson"))) %>%
+  ungroup()
+
+cor_results_female |>
+  select(roi, estimate, p.value)
+
+
+```

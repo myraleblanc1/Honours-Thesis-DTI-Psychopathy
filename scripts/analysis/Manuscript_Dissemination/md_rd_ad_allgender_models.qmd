@@ -10,7 +10,6 @@ project:
   execute-dir: project
 ---
 
-
 # Linear Regression: All Gender AD/MD/RD
 
 ## Model 1: AD/MD/RD \~ PCL-R + Age + IQ + Gender
@@ -61,10 +60,10 @@ n_distinct(roi_dti_allgender$subject_id)
 ```
 
 ## Collapse UF and DC ROIs
+
 ```{r}
 
 ```
-
 
 ## Model 1: AD/RD/MD \~ PCL-R + Age + Gender
 
@@ -98,6 +97,7 @@ results_m1_pclr <- results_m1 |>
 ```
 
 Simple Output (Just PCL-R Effects)
+
 ```{r}
 #| execute:
 #|   cache: false
@@ -114,6 +114,7 @@ results_m1_pclr |>
 ```
 
 Full Regression Output
+
 ```{r}
 #| execute:
 #|   cache: false

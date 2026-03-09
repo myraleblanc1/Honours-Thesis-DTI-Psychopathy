@@ -29,34 +29,19 @@ library(tidyr)
 
 roi_fa_allgender <-  read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
   rename(
-    age  = Age...6,
-    factor1 = `Factor 1.y`,
-    factor2 = `Factor 2.y`,
-    iq   = IQ.x,
-    sus  = `Total Drug Use`,
-    pclr = `PCL-R Total`, 
+    sus  = `Total Drug Use`
   ) 
 
 roi_fa_male <-  read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
-  filter(Gender == 0)|>
+  filter(gender == 0)|>
   rename(
-    age  = Age...6,
-    factor1 = `Factor 1.y`,
-    factor2 = `Factor 2.y`,
-    iq   = IQ.x,
-    sus  = `Total Drug Use`,
-    pclr = `PCL-R Total`, 
+    sus  = `Total Drug Use`
   ) 
 
 roi_fa_female <-  read_csv(here("data", "raw", "rawdata_manuscript_FA.csv")) |>
-  filter(Gender == 1)|>
+  filter(gender == 1)|>
   rename(
-    age  = Age...6,
-    factor1 = `Factor 1.y`,
-    factor2 = `Factor 2.y`,
-    iq   = IQ.x,
-    sus  = `Total Drug Use`,
-    pclr = `PCL-R Total`, 
+    sus  = `Total Drug Use`
   ) 
 ```
 ## All Gender
@@ -70,12 +55,15 @@ Age
 ```{r}
 range(roi_fa_allgender$age, na.rm = TRUE)
 mean(roi_fa_allgender$age, na.rm = TRUE)
+sd(roi_fa_allgender$age, na.rm = TRUE)
+n_distinct(roi_fa_allgender$age, roi_fa_allgender$subject_id, na.rm = TRUE)
 ```
 IQ
 
 ```{r}
 range(roi_fa_allgender$iq, na.rm = TRUE)
 mean(roi_fa_allgender$iq, na.rm = TRUE)
+n_distinct(roi_fa_allgender$iq, roi_fa_allgender$subject_id, na.rm = TRUE)
 ```
 PCL-R
 
@@ -83,6 +71,7 @@ PCL-R
 range(roi_fa_allgender$pclr, na.rm = TRUE)
 mean(roi_fa_allgender$pclr, na.rm = TRUE)
 sd(roi_fa_allgender$pclr, na.rm = TRUE)
+n_distinct(roi_fa_allgender$pclr, roi_fa_allgender$subject_id, na.rm = TRUE)
 ```
 
 Factor 1 
@@ -90,6 +79,7 @@ Factor 1
 range(roi_fa_allgender$factor1, na.rm = TRUE)
 mean(roi_fa_allgender$factor1, na.rm = TRUE)
 sd(roi_fa_allgender$factor1, na.rm = TRUE)
+n_distinct(roi_fa_allgender$factor1, roi_fa_allgender$subject_id, na.rm = TRUE)
 ```
 
 Factor 2
@@ -97,12 +87,14 @@ Factor 2
 range(roi_fa_allgender$factor2, na.rm = TRUE)
 mean(roi_fa_allgender$factor2, na.rm = TRUE)
 sd(roi_fa_allgender$factor2, na.rm = TRUE)
+n_distinct(roi_fa_allgender$factor2, roi_fa_allgender$subject_id, na.rm = TRUE)
 ```
 
 SUS
 ```{r}
 range(roi_fa_allgender$sus, na.rm = TRUE)
 mean(roi_fa_allgender$sus, na.rm = TRUE)
+n_distinct(roi_fa_allgender$sus, roi_fa_allgender$subject_id, na.rm = TRUE)
 ```
 
 #Male
@@ -117,12 +109,15 @@ Age
 ```{r}
 range(roi_fa_male$age, na.rm = TRUE)
 mean(roi_fa_male$age, na.rm = TRUE)
+sd(roi_fa_male$age, na.rm = TRUE)
+n_distinct(roi_fa_male$age, roi_fa_male$subject_id, na.rm = TRUE)
 ```
 IQ
 
 ```{r}
 range(roi_fa_male$iq, na.rm = TRUE)
 mean(roi_fa_male$iq, na.rm = TRUE)
+n_distinct(roi_fa_male$iq, roi_fa_male$subject_id, na.rm = TRUE)
 ```
 PCL-R
 
@@ -130,24 +125,33 @@ PCL-R
 range(roi_fa_male$pclr, na.rm = TRUE)
 mean(roi_fa_male$pclr, na.rm = TRUE)
 sd(roi_fa_male$pclr, na.rm = TRUE)
+n_distinct(roi_fa_male$pclr, roi_fa_male$subject_id, na.rm = TRUE)
 ```
 
 Factor 1 
 ```{r}
 range(roi_fa_male$factor1, na.rm = TRUE)
 mean(roi_fa_male$factor1, na.rm = TRUE)
+sd(roi_fa_male$factor1, na.rm = TRUE)
+n_distinct(roi_fa_male$factor1, roi_fa_male$subject_id, na.rm = TRUE)
 ```
 
 Factor 2
 ```{r}
 range(roi_fa_male$factor2, na.rm = TRUE)
 mean(roi_fa_male$factor2, na.rm = TRUE)
+sd(roi_fa_male$factor2, na.rm = TRUE)
+n_distinct(roi_fa_male$factor2, roi_fa_male$subject_id, na.rm = TRUE)
+
 ```
 
 SUS
 ```{r}
 range(roi_fa_male$sus, na.rm = TRUE)
 mean(roi_fa_male$sus, na.rm = TRUE)
+sd(roi_fa_male$sus, na.rm = TRUE)
+n_distinct(roi_fa_male$sus, roi_fa_male$subject_id, na.rm = TRUE)
+
 ```
 
 #Female
@@ -162,12 +166,16 @@ Age
 ```{r}
 range(roi_fa_female$age, na.rm = TRUE)
 mean(roi_fa_female$age, na.rm = TRUE)
+sd(roi_fa_female$age, na.rm = TRUE)
+n_distinct(roi_fa_female$age, roi_fa_female$subject_id, na.rm = TRUE)
 ```
 IQ
 
 ```{r}
 range(roi_fa_female$iq, na.rm = TRUE)
 mean(roi_fa_female$iq, na.rm = TRUE)
+sd(roi_fa_female$iq, na.rm = TRUE)
+n_distinct(roi_fa_female$iq, roi_fa_female$subject_id, na.rm = TRUE)
 ```
 PCL-R
 
@@ -175,22 +183,30 @@ PCL-R
 range(roi_fa_female$pclr, na.rm = TRUE)
 mean(roi_fa_female$pclr, na.rm = TRUE)
 sd(roi_fa_female$pclr, na.rm = TRUE)
+n_distinct(roi_fa_female$pclr, roi_fa_female$subject_id, na.rm = TRUE)
 ```
 
 Factor 1 
 ```{r}
 range(roi_fa_female$factor1, na.rm = TRUE)
 mean(roi_fa_female$factor1, na.rm = TRUE)
+sd(roi_fa_female$factor1, na.rm = TRUE)
+n_distinct(roi_fa_female$factor1, roi_fa_female$subject_id, na.rm = TRUE)
 ```
 
 Factor 2
 ```{r}
 range(roi_fa_female$factor2, na.rm = TRUE)
 mean(roi_fa_female$factor2, na.rm = TRUE)
+sd(roi_fa_female$factor2, na.rm = TRUE)
+n_distinct(roi_fa_female$factor2, roi_fa_female$subject_id, na.rm = TRUE)
 ```
 
 SUS
 ```{r}
 range(roi_fa_female$sus, na.rm = TRUE)
 mean(roi_fa_female$sus, na.rm = TRUE)
+sd(roi_fa_female$sus, na.rm = TRUE)
+n_distinct(roi_fa_female$sus, roi_fa_female$subject_id, na.rm = TRUE)
+
 ```
